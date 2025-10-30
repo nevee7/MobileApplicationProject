@@ -1,0 +1,30 @@
+# ASP.NET Core
+AnimalFostering.API/bin/
+AnimalFostering.API/obj/
+AnimalFostering.API/.vs/
+AnimalFostering.API/appsettings.Development.json
+
+# Flutter
+animal_fostering_app/build/
+animal_fostering_app/.dart_tool/
+animal_fostering_app/.packages
+animal_fostering_app/.flutter-plugins
+animal_fostering_app/.flutter-plugins-dependencies
+animal_fostering_app/.metadata
+animal_fostering_app/ios/
+animal_fostering_app/android/app/debug/
+animal_fostering_app/android/app/profile/
+animal_fostering_app/android/app/release/
+
+# Database (don't commit sensitive data)
+AnimalFostering.API/appsettings.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
