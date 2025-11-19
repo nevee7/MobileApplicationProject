@@ -18,9 +18,28 @@ namespace AnimalFostering.API.Controllers
 
         // GET: api/animals
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Animal>>> GetAnimals()
+        public async Task<ActionResult<IEnumerable<object>>> GetAnimals()
         {
-            return await _context.Animals.ToListAsync();
+            var animals = await _context.Animals
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Name,
+                    a.Species,
+                    a.Breed,
+                    a.Age,
+                    a.Gender,
+                    a.Size,
+                    a.Description,
+                    a.Status,
+                    a.ImageUrl,
+                    a.ShelterId, // default 0 if null
+                    a.CreatedAt,
+                    a.UpdatedAt
+                })
+                .ToListAsync();
+
+            return Ok(animals);
         }
 
         // GET: api/animals/5

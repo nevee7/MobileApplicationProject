@@ -18,7 +18,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFlutterApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000")
+            policy.WithOrigins("http://10.0.2.2:5000") // Flutter emulator URL
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -37,4 +37,5 @@ app.UseCors("AllowFlutterApp");
 app.UseAuthorization();
 app.MapControllers();
 
+app.Urls.Add("http://0.0.0.0:5000"); // listen on all interfaces
 app.Run();
