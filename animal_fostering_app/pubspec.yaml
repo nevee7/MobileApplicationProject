@@ -10,10 +10,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.1.0  # ← ADD THIS LINE
+  http: ^1.1.0
   provider: ^6.1.1
   image_picker: ^1.0.4
   shared_preferences: ^2.2.2
+  cached_network_image: ^3.2.3
+  google_fonts: ^5.0.0
+  shimmer: ^2.0.0
 
 dev_dependencies:
   flutter_test:

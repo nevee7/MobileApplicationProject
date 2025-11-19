@@ -6,7 +6,7 @@ class AddAnimalScreen extends StatefulWidget {
   const AddAnimalScreen({super.key});
 
   @override
-  _AddAnimalScreenState createState() => _AddAnimalScreenState();
+  State<AddAnimalScreen> createState() => _AddAnimalScreenState();
 }
 
 class _AddAnimalScreenState extends State<AddAnimalScreen> {
@@ -16,94 +16,32 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
   final TextEditingController _breedController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-
-  String _status = 'Available';
+  String _status = 'available';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add New Animal'),
-      ),
+      appBar: AppBar(title: const Text('Add New Animal')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a name';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _speciesController,
-                decoration: const InputDecoration(labelText: 'Species'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter species';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _breedController,
-                decoration: const InputDecoration(labelText: 'Breed'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter breed';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _ageController,
-                decoration: const InputDecoration(labelText: 'Age'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter age';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter description';
-                  }
-                  return null;
-                },
-              ),
+              TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name'), validator: (v) => v!.isEmpty ? 'Enter name' : null),
+              TextFormField(controller: _speciesController, decoration: const InputDecoration(labelText: 'Species'), validator: (v) => v!.isEmpty ? 'Enter species' : null),
+              TextFormField(controller: _breedController, decoration: const InputDecoration(labelText: 'Breed'), validator: (v) => v!.isEmpty ? 'Enter breed' : null),
+              TextFormField(controller: _ageController, decoration: const InputDecoration(labelText: 'Age'), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Enter age' : null),
+              TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Description'), maxLines: 3, validator: (v) => v!.isEmpty ? 'Enter description' : null),
               DropdownButtonFormField<String>(
-                initialValue: _status,
+                value: _status,
+                items: ['available','fostered','adopted','pending'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                onChanged: (val) => setState(() => _status = val!),
                 decoration: const InputDecoration(labelText: 'Status'),
-                items: ['Available', 'Fostered', 'Adopted']
-                    .map((status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(status),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _status = value!;
-                  });
-                },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _submitForm,
+                onPressed: _submit,
                 child: const Text('Add Animal'),
               ),
             ],
@@ -113,53 +51,32 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
     );
   }
 
-  void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        Animal newAnimal = Animal(
-          name: _nameController.text,
-          species: _speciesController.text,
-          breed: _breedController.text,
-          age: int.parse(_ageController.text),
-          description: _descriptionController.text,
-          imageUrl: '', // You can add image upload later
-          status: _status,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
+  void _submit() async {
+  if (_formKey.currentState!.validate()) {
+    final newAnimal = Animal(
+      id: DateTime.now().millisecondsSinceEpoch,
+      name: _nameController.text,
+      species: _speciesController.text,
+      breed: _breedController.text,
+      age: int.parse(_ageController.text),
+      gender: 'Unknown',
+      size: 'Medium',
+      description: _descriptionController.text,
+      status: _status,
+      imageUrl: '',
+      shelterId: 1, // int
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
 
-        await ApiService.createAnimal(newAnimal);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Animal added successfully!')),
-        );
+    await ApiService.createAnimal(newAnimal);
 
-        // Clear form
-        _formKey.currentState!.reset();
-        _nameController.clear();
-        _speciesController.clear();
-        _breedController.clear();
-        _ageController.clear();
-        _descriptionController.clear();
-        setState(() {
-          _status = 'Available';
-        });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Animal added')),
+    );
 
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error adding animal: $e')),
-        );
-      }
-    }
+    _formKey.currentState!.reset();
   }
+}
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _speciesController.dispose();
-    _breedController.dispose();
-    _ageController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
 }
