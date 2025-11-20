@@ -1,38 +1,54 @@
+// lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/animal.dart';
+import '../models/shelter.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:5000/api'; // your backend URL
+  // For Android emulator: 10.0.2.2
+  static const String baseUrl = 'http://10.0.2.2:5000/api';
 
-  // CREATE a new animal
-  static Future<bool> createAnimal(Animal animal) async {
-    final url = Uri.parse('$baseUrl/animals');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(animal.toJson()),
-    );
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return true;
-    } else {
-      print('Failed to create animal: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      return false;
+  static Future<List<Animal>> getAnimals({Map<String, String>? query}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/animals').replace(queryParameters: query);
+      final res = await http.get(uri).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final List data = jsonDecode(res.body) as List;
+        return data.map((e) => Animal.fromJson(e as Map<String, dynamic>)).toList();
+      } else {
+        throw Exception('API ${res.statusCode}: ${res.body}');
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 
-  // Optional: fetch all animals
-  static Future<List<Animal>> getAnimals() async {
-    final url = Uri.parse('$baseUrl/animals');
-    final response = await http.get(url);
+  static Future<bool> createAnimal(Animal a) async {
+    try {
+      final uri = Uri.parse('$baseUrl/animals');
+      final res = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(a.toJson()),
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 201 || res.statusCode == 200;
+    } catch (e) {
+      rethrow;
+    }
+  }
 
-    if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      return data.map((json) => Animal.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load animals');
+  static Future<List<Shelter>> getShelters() async {
+    try {
+      final uri = Uri.parse('$baseUrl/shelters');
+      final res = await http.get(uri).timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final List data = jsonDecode(res.body) as List;
+        return data.map((e) => Shelter.fromJson(e as Map<String, dynamic>)).toList();
+      } else {
+        throw Exception('API ${res.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 }

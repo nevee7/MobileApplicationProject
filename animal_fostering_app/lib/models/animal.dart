@@ -1,3 +1,4 @@
+// lib/models/animal.dart
 class Animal {
   final int id;
   final String name;
@@ -31,22 +32,24 @@ class Animal {
     required this.updatedAt,
   });
 
-  factory Animal.fromJson(Map<String, dynamic> json) => Animal(
-        id: json['Id'] ?? 0,
-        name: json['Name'] ?? '',
-        species: json['Species'] ?? '',
-        breed: json['Breed'] ?? '',
-        age: json['Age'] ?? 0,
-        gender: json['Gender'] ?? 'Unknown',
-        size: json['Size'], // nullable
-        description: json['Description'] ?? '',
-        medicalNotes: json['MedicalNotes'], // nullable
-        status: json['Status'] ?? 'available',
-        imageUrl: json['ImageUrl'], // nullable
-        shelterId: json['ShelterId'], // nullable int
-        createdAt: DateTime.parse(json['CreatedAt'] ?? DateTime.now().toIso8601String()),
-        updatedAt: DateTime.parse(json['UpdatedAt'] ?? DateTime.now().toIso8601String()),
-      );
+  factory Animal.fromJson(Map<String, dynamic> json) {
+    return Animal(
+      id: (json['Id'] ?? json['id'] ?? 0) as int,
+      name: (json['Name'] ?? json['name'] ?? '') as String,
+      species: (json['Species'] ?? json['species'] ?? '') as String,
+      breed: (json['Breed'] ?? json['breed'] ?? '') as String,
+      age: (json['Age'] ?? json['age'] ?? 0) as int,
+      gender: (json['Gender'] ?? json['gender'] ?? 'Unknown') as String,
+      size: (json['Size'] ?? json['size']) as String?,
+      description: (json['Description'] ?? json['description'] ?? '') as String,
+      medicalNotes: (json['MedicalNotes'] ?? json['medicalNotes']) as String?,
+      status: (json['Status'] ?? json['status'] ?? 'available') as String,
+      imageUrl: (json['ImageUrl'] ?? json['imageUrl']) as String?,
+      shelterId: (json['ShelterId'] ?? json['shelterId']) as int?,
+      createdAt: DateTime.tryParse((json['CreatedAt'] ?? json['createdAt'])?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse((json['UpdatedAt'] ?? json['updatedAt'])?.toString() ?? '') ?? DateTime.now(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'Id': id,

@@ -1,37 +1,38 @@
+// lib/models/shelter.dart
 class Shelter {
   final int id;
   final String name;
   final String address;
-  final String city;
-  final String phone;
-  final String email;
-  final double latitude;
-  final double longitude;
-  final String description;
+  final String? city;
+  final String? phone;
+  final String? email;
+  final double? latitude;
+  final double? longitude;
+  final String? description;
 
   Shelter({
     required this.id,
     required this.name,
     required this.address,
-    required this.city,
-    required this.phone,
-    required this.email,
-    required this.latitude,
-    required this.longitude,
-    required this.description,
+    this.city,
+    this.phone,
+    this.email,
+    this.latitude,
+    this.longitude,
+    this.description,
   });
 
   factory Shelter.fromJson(Map<String, dynamic> json) {
     return Shelter(
-      id: json['Id'] as int,
-      name: json['Name'] as String,
-      address: json['Address'] as String,
-      city: json['City'] as String,
-      phone: json['Phone'] as String,
-      email: json['Email'] as String,
-      latitude: (json['Latitude'] as num).toDouble(),
-      longitude: (json['Longitude'] as num).toDouble(),
-      description: json['Description'] as String,
+      id: (json['Id'] ?? json['id'] ?? 0) as int,
+      name: (json['Name'] ?? json['name'] ?? '') as String,
+      address: (json['Address'] ?? json['address'] ?? '') as String,
+      city: (json['City'] ?? json['city']) as String?,
+      phone: (json['Phone'] ?? json['phone']) as String?,
+      email: (json['Email'] ?? json['email']) as String?,
+      latitude: json['Latitude'] != null ? (json['Latitude'] as num).toDouble() : null,
+      longitude: json['Longitude'] != null ? (json['Longitude'] as num).toDouble() : null,
+      description: (json['Description'] ?? json['description']) as String?,
     );
   }
 }
