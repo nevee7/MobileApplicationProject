@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: cuteGradient,
-                    boxShadow: [BoxShadow(color: primaryPurple.withOpacity(0.18), blurRadius: 18, offset: Offset(0, 8))],
+                    boxShadow: [BoxShadow(color: primaryPurple.withOpacity(0.18), blurRadius: 18, offset: const Offset(0, 8))],
                   ),
                   child: const Icon(Icons.pets, color: Colors.white, size: 44),
                 ),
@@ -84,13 +84,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: _loading ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Sign in'),
+                      child: _loading 
+                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                          : const Text('Sign in', style: TextStyle(fontSize: 16)),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
-                    child: Text('Skip for demo', style: TextStyle(color: primaryViolet)),
+                    child: Text('Skip for demo', style: TextStyle(color: primaryViolet, fontSize: 14)),
                   ),
                 ],
               ),

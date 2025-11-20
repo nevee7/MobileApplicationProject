@@ -17,6 +17,8 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
   final _breed = TextEditingController();
   final _age = TextEditingController();
   final _description = TextEditingController();
+  String _gender = 'Unknown';
+  String _size = 'Medium';
   String _status = 'available';
   bool _saving = false;
 
@@ -40,8 +42,8 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
       species: _species.text.trim(),
       breed: _breed.text.trim(),
       age: int.tryParse(_age.text.trim()) ?? 0,
-      gender: 'Unknown',
-      size: 'Medium',
+      gender: _gender,
+      size: _size,
       description: _description.text.trim(),
       medicalNotes: null,
       status: _status,
@@ -54,14 +56,29 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
     try {
       final ok = await ApiService.createAnimal(newAnimal);
       if (ok) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Animal created')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Animal created successfully!'),
+            backgroundColor: Colors.green,
+          )
+        );
         _form.currentState!.reset();
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to create')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to create animal'),
+            backgroundColor: Colors.red,
+          )
+        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        )
+      );
     } finally {
       setState(() => _saving = false);
     }
@@ -77,15 +94,51 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
           key: _form,
           child: ListView(
             children: [
-              TextFormField(controller: _name, decoration: const InputDecoration(labelText: 'Name'), validator: (v) => v == null || v.isEmpty ? 'Enter name' : null),
+              TextFormField(
+                controller: _name, 
+                decoration: const InputDecoration(labelText: 'Name'), 
+                validator: (v) => v == null || v.isEmpty ? 'Enter name' : null
+              ),
               const SizedBox(height: 12),
-              TextFormField(controller: _species, decoration: const InputDecoration(labelText: 'Species'), validator: (v) => v == null || v.isEmpty ? 'Enter species' : null),
+              TextFormField(
+                controller: _species, 
+                decoration: const InputDecoration(labelText: 'Species'), 
+                validator: (v) => v == null || v.isEmpty ? 'Enter species' : null
+              ),
               const SizedBox(height: 12),
-              TextFormField(controller: _breed, decoration: const InputDecoration(labelText: 'Breed'), validator: (v) => v == null || v.isEmpty ? 'Enter breed' : null),
+              TextFormField(
+                controller: _breed, 
+                decoration: const InputDecoration(labelText: 'Breed'), 
+                validator: (v) => v == null || v.isEmpty ? 'Enter breed' : null
+              ),
               const SizedBox(height: 12),
-              TextFormField(controller: _age, decoration: const InputDecoration(labelText: 'Age'), keyboardType: TextInputType.number, validator: (v) => v == null || v.isEmpty ? 'Enter age' : null),
+              TextFormField(
+                controller: _age, 
+                decoration: const InputDecoration(labelText: 'Age'), 
+                keyboardType: TextInputType.number, 
+                validator: (v) => v == null || v.isEmpty ? 'Enter age' : null
+              ),
               const SizedBox(height: 12),
-              TextFormField(controller: _description, decoration: const InputDecoration(labelText: 'Description'), maxLines: 3, validator: (v) => v == null || v.isEmpty ? 'Enter description' : null),
+              DropdownButtonFormField<String>(
+                value: _gender,
+                items: ['Unknown', 'Male', 'Female'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                onChanged: (v) => setState(() => _gender = v ?? 'Unknown'),
+                decoration: const InputDecoration(labelText: 'Gender'),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _size,
+                items: ['Small', 'Medium', 'Large'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                onChanged: (v) => setState(() => _size = v ?? 'Medium'),
+                decoration: const InputDecoration(labelText: 'Size'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _description, 
+                decoration: const InputDecoration(labelText: 'Description'), 
+                maxLines: 3, 
+                validator: (v) => v == null || v.isEmpty ? 'Enter description' : null
+              ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: _status,
@@ -93,13 +146,15 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
                 onChanged: (v) => setState(() => _status = v ?? 'available'),
                 decoration: const InputDecoration(labelText: 'Status'),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 24),
               SizedBox(
                 height: 48,
                 child: ElevatedButton(
                   onPressed: _saving ? null : _submit,
                   style: ElevatedButton.styleFrom(backgroundColor: primaryPurple),
-                  child: _saving ? const CircularProgressIndicator(color: Colors.white) : const Text('Create animal'),
+                  child: _saving 
+                      ? const CircularProgressIndicator(color: Colors.white) 
+                      : const Text('Create Animal', style: TextStyle(fontSize: 16)),
                 ),
               )
             ],
