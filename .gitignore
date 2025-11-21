@@ -2,7 +2,7 @@
 AnimalFostering.API/bin/
 AnimalFostering.API/obj/
 AnimalFostering.API/.vs/
-AnimalFostering.API/appsettings.Development.json
+
 
 # Flutter
 animal_fostering_app/build/
@@ -16,8 +16,7 @@ animal_fostering_app/android/app/debug/
 animal_fostering_app/android/app/profile/
 animal_fostering_app/android/app/release/
 
-# Database (don't commit sensitive data)
-AnimalFostering.API/appsettings.json
+
 
 # IDE
 .vscode/
