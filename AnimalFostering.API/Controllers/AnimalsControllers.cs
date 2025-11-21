@@ -1,3 +1,4 @@
+// Controllers/AnimalsController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AnimalFostering.API.Data;
@@ -16,29 +17,44 @@ namespace AnimalFostering.API.Controllers
             _context = context;
         }
 
-        // GET: api/animals
+        // GET: api/animals with search and filters
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetAnimals()
+        public async Task<ActionResult<IEnumerable<Animal>>> GetAnimals(
+            [FromQuery] string? search,
+            [FromQuery] string? species,
+            [FromQuery] string? status,
+            [FromQuery] string? shelter)
         {
-            var animals = await _context.Animals
-                .Select(a => new
-                {
-                    a.Id,
-                    a.Name,
-                    a.Species,
-                    a.Breed,
-                    a.Age,
-                    a.Gender,
-                    a.Size,
-                    a.Description,
-                    a.Status,
-                    a.ImageUrl,
-                    a.ShelterId, // default 0 if null
-                    a.CreatedAt,
-                    a.UpdatedAt
-                })
-                .ToListAsync();
+            var query = _context.Animals.AsQueryable();
 
+            // Search by name, breed, or description
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(a => 
+                    a.Name.Contains(search) || 
+                    a.Breed.Contains(search) || 
+                    a.Description.Contains(search));
+            }
+
+            // Filter by species
+            if (!string.IsNullOrEmpty(species))
+            {
+                query = query.Where(a => a.Species == species);
+            }
+
+            // Filter by status
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(a => a.Status.ToLower() == status.ToLower());
+            }
+
+            // Filter by shelter (you'll need to implement shelter logic)
+            if (!string.IsNullOrEmpty(shelter) && int.TryParse(shelter, out int shelterId))
+            {
+                query = query.Where(a => a.ShelterId == shelterId);
+            }
+
+            var animals = await query.ToListAsync();
             return Ok(animals);
         }
 
@@ -50,7 +66,7 @@ namespace AnimalFostering.API.Controllers
 
             if (animal == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Animal not found" });
             }
 
             return animal;
@@ -60,6 +76,15 @@ namespace AnimalFostering.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Animal>> PostAnimal(Animal animal)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Set timestamps
+            animal.CreatedAt = DateTime.UtcNow;
+            animal.UpdatedAt = DateTime.UtcNow;
+
             _context.Animals.Add(animal);
             await _context.SaveChangesAsync();
 
@@ -75,7 +100,25 @@ namespace AnimalFostering.API.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(animal).State = EntityState.Modified;
+            var existingAnimal = await _context.Animals.FindAsync(id);
+            if (existingAnimal == null)
+            {
+                return NotFound();
+            }
+
+            // Update properties
+            existingAnimal.Name = animal.Name;
+            existingAnimal.Species = animal.Species;
+            existingAnimal.Breed = animal.Breed;
+            existingAnimal.Age = animal.Age;
+            existingAnimal.Gender = animal.Gender;
+            existingAnimal.Size = animal.Size;
+            existingAnimal.Description = animal.Description;
+            existingAnimal.MedicalNotes = animal.MedicalNotes;
+            existingAnimal.Status = animal.Status;
+            existingAnimal.ImageUrl = animal.ImageUrl;
+            existingAnimal.ShelterId = animal.ShelterId;
+            existingAnimal.UpdatedAt = DateTime.UtcNow;
 
             try
             {
@@ -87,10 +130,7 @@ namespace AnimalFostering.API.Controllers
                 {
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
 
             return NoContent();

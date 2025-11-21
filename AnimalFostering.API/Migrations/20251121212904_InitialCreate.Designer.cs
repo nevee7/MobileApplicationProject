@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AnimalFostering.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251030174403_InitialCreate")]
+    [Migration("20251121212904_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -47,12 +47,24 @@ namespace AnimalFostering.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("Gender")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MedicalNotes")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ShelterId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Size")
                         .HasColumnType("text");
 
                     b.Property<string>("Species")
@@ -69,34 +81,45 @@ namespace AnimalFostering.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Animals");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Age = 2,
-                            Breed = "Siamese",
-                            CreatedAt = new DateTime(2025, 10, 30, 17, 44, 2, 455, DateTimeKind.Utc).AddTicks(2752),
-                            Description = "Friendly and playful",
-                            ImageUrl = "",
-                            Name = "Whiskers",
-                            Species = "Cat",
-                            Status = "Available",
-                            UpdatedAt = new DateTime(2025, 10, 30, 17, 44, 2, 455, DateTimeKind.Utc).AddTicks(2756)
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Age = 3,
-                            Breed = "Golden Retriever",
-                            CreatedAt = new DateTime(2025, 10, 30, 17, 44, 2, 455, DateTimeKind.Utc).AddTicks(4624),
-                            Description = "Loyal and energetic",
-                            ImageUrl = "",
-                            Name = "Buddy",
-                            Species = "Dog",
-                            Status = "Available",
-                            UpdatedAt = new DateTime(2025, 10, 30, 17, 44, 2, 455, DateTimeKind.Utc).AddTicks(4624)
-                        });
+            modelBuilder.Entity("AnimalFostering.API.Models.Shelter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Shelters");
                 });
 #pragma warning restore 612, 618
         }

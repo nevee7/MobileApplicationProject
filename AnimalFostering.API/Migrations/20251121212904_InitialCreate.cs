@@ -4,8 +4,6 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
 namespace AnimalFostering.API.Migrations
 {
     /// <inheritdoc />
@@ -24,9 +22,13 @@ namespace AnimalFostering.API.Migrations
                     Species = table.Column<string>(type: "text", nullable: false),
                     Breed = table.Column<string>(type: "text", nullable: false),
                     Age = table.Column<int>(type: "integer", nullable: false),
+                    Gender = table.Column<string>(type: "text", nullable: false),
+                    Size = table.Column<string>(type: "text", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: false),
-                    ImageUrl = table.Column<string>(type: "text", nullable: false),
+                    MedicalNotes = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<string>(type: "text", nullable: false),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true),
+                    ShelterId = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -35,13 +37,24 @@ namespace AnimalFostering.API.Migrations
                     table.PrimaryKey("PK_Animals", x => x.Id);
                 });
 
-            migrationBuilder.InsertData(
-                table: "Animals",
-                columns: new[] { "Id", "Age", "Breed", "CreatedAt", "Description", "ImageUrl", "Name", "Species", "Status", "UpdatedAt" },
-                values: new object[,]
+            migrationBuilder.CreateTable(
+                name: "Shelters",
+                columns: table => new
                 {
-                    { 1, 2, "Siamese", new DateTime(2025, 10, 30, 17, 44, 2, 455, DateTimeKind.Utc).AddTicks(2752), "Friendly and playful", "", "Whiskers", "Cat", "Available", new DateTime(2025, 10, 30, 17, 44, 2, 455, DateTimeKind.Utc).AddTicks(2756) },
-                    { 2, 3, "Golden Retriever", new DateTime(2025, 10, 30, 17, 44, 2, 455, DateTimeKind.Utc).AddTicks(4624), "Loyal and energetic", "", "Buddy", "Dog", "Available", new DateTime(2025, 10, 30, 17, 44, 2, 455, DateTimeKind.Utc).AddTicks(4624) }
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Address = table.Column<string>(type: "text", nullable: false),
+                    City = table.Column<string>(type: "text", nullable: true),
+                    Phone = table.Column<string>(type: "text", nullable: true),
+                    Email = table.Column<string>(type: "text", nullable: true),
+                    Latitude = table.Column<double>(type: "double precision", nullable: true),
+                    Longitude = table.Column<double>(type: "double precision", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Shelters", x => x.Id);
                 });
         }
 
@@ -50,6 +63,9 @@ namespace AnimalFostering.API.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Animals");
+
+            migrationBuilder.DropTable(
+                name: "Shelters");
         }
     }
 }
