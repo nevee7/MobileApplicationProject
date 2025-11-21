@@ -1,63 +1,122 @@
-// lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/animal.dart';
 import '../models/shelter.dart';
+import '../models/adoption_application.dart';
+import 'auth_service.dart';
 
 class ApiService {
-  // For Android emulator: 10.0.2.2
   static const String baseUrl = 'http://10.0.2.2:5000/api';
 
+  // Animals
   static Future<List<Animal>> getAnimals({Map<String, String>? query}) async {
-    try {
-      final uri = Uri.parse('$baseUrl/animals').replace(queryParameters: query);
-      final res = await http.get(uri).timeout(const Duration(seconds: 8));
-      if (res.statusCode == 200) {
-        final List data = jsonDecode(res.body) as List;
-        return data.map((e) => Animal.fromJson(e as Map<String, dynamic>)).toList();
-      } else {
-        throw Exception('API ${res.statusCode}: ${res.body}');
-      }
-    } catch (e) {
-      // For demo purposes, return mock data if API is not available
-      print('API Error: $e');
-      return _getMockAnimals();
+    final uri = Uri.parse('$baseUrl/animals').replace(queryParameters: query);
+    final response = await http.get(uri, headers: AuthService.authHeaders);
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body) as List;
+      return data.map((e) => Animal.fromJson(e as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception('Failed to load animals: ${response.statusCode}');
     }
   }
 
-  static Future<bool> createAnimal(Animal a) async {
-    try {
-      final uri = Uri.parse('$baseUrl/animals');
-      final res = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(a.toJson()),
-      ).timeout(const Duration(seconds: 8));
-      return res.statusCode == 201 || res.statusCode == 200;
-    } catch (e) {
-      print('Create Animal Error: $e');
-      // For demo purposes, return true
-      return true;
+  static Future<Animal> getAnimal(int id) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/animals/$id'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      return Animal.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else {
+      throw Exception('Failed to load animal');
     }
   }
 
+  static Future<bool> createAnimal(Animal animal) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/animals'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode(animal.toJson()),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  static Future<bool> updateAnimal(Animal animal) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/animals/${animal.id}'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode(animal.toJson()),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> deleteAnimal(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/animals/$id'),
+      headers: AuthService.authHeaders,
+    );
+
+    return response.statusCode == 200;
+  }
+
+  // Shelters
   static Future<List<Shelter>> getShelters() async {
-    try {
-      final uri = Uri.parse('$baseUrl/shelters');
-      final res = await http.get(uri).timeout(const Duration(seconds: 8));
-      if (res.statusCode == 200) {
-        final List data = jsonDecode(res.body) as List;
-        return data.map((e) => Shelter.fromJson(e as Map<String, dynamic>)).toList();
-      } else {
-        throw Exception('API ${res.statusCode}');
-      }
-    } catch (e) {
-      print('Get Shelters Error: $e');
-      return [];
+    final response = await http.get(
+      Uri.parse('$baseUrl/shelters'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body) as List;
+      return data.map((e) => Shelter.fromJson(e as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception('Failed to load shelters');
     }
   }
 
-  // Mock data for demo purposes
+  // Adoption Applications
+  static Future<List<AdoptionApplication>> getAdoptionApplications() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/applications'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body) as List;
+      return data.map((e) => AdoptionApplication.fromJson(e as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception('Failed to load adoption applications');
+    }
+  }
+
+  static Future<bool> createAdoptionApplication(AdoptionApplication application) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/applications'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode(application.toJson()),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  static Future<bool> updateAdoptionApplication(int id, String status, String? adminNotes) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/applications/$id'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode({
+        'status': status,
+        'adminNotes': adminNotes,
+      }),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  // Mock data fallback
   static List<Animal> _getMockAnimals() {
     return [
       Animal(
@@ -68,7 +127,7 @@ class ApiService {
         age: 2,
         gender: 'Female',
         size: 'Large',
-        description: 'Luna is a friendly and energetic golden retriever who loves to play and cuddle. She gets along well with children and other dogs.',
+        description: 'Luna is a friendly and energetic golden retriever who loves to play and cuddle.',
         medicalNotes: 'Up to date on all vaccinations',
         status: 'available',
         imageUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=400',
@@ -76,54 +135,7 @@ class ApiService {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),
-      Animal(
-        id: 2,
-        name: 'Whiskers',
-        species: 'Cat',
-        breed: 'Siamese',
-        age: 3,
-        gender: 'Male',
-        size: 'Medium',
-        description: 'Whiskers is a calm and affectionate cat who enjoys quiet environments. He loves sitting by the window and watching birds.',
-        medicalNotes: 'Neutered and vaccinated',
-        status: 'available',
-        imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400',
-        shelterId: 1,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Animal(
-        id: 3,
-        name: 'Max',
-        species: 'Dog',
-        breed: 'Labrador',
-        age: 4,
-        gender: 'Male',
-        size: 'Large',
-        description: 'Max is a loyal and protective companion. He knows basic commands and loves going for long walks.',
-        medicalNotes: 'Heartworm negative',
-        status: 'pending',
-        imageUrl: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400',
-        shelterId: 2,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-      Animal(
-        id: 4,
-        name: 'Bella',
-        species: 'Cat',
-        breed: 'Persian',
-        age: 1,
-        gender: 'Female',
-        size: 'Small',
-        description: 'Bella is a playful kitten who loves chasing toys and taking naps in sunny spots.',
-        medicalNotes: 'Too young for spaying',
-        status: 'available',
-        imageUrl: 'https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=400',
-        shelterId: 1,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
+      // Add more mock animals as needed
     ];
   }
 }

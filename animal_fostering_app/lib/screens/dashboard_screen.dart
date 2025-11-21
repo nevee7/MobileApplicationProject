@@ -1,12 +1,9 @@
-// lib/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
-import 'animal_list_screen.dart';
-import 'add_animal_screen.dart';
-import 'animal_details_screen.dart';
-import '../theme.dart';
-import '../models/animal.dart';
+import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../models/animal.dart';
 import '../widgets/animal_card.dart';
+import '../theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -15,15 +12,20 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _index = 0;
   late Future<List<Animal>> _animalsFuture;
   late Future<Map<String, int>> _statsFuture;
 
   @override
   void initState() {
     super.initState();
-    _animalsFuture = ApiService.getAnimals();
-    _statsFuture = _loadStats();
+    _refreshData();
+  }
+
+  void _refreshData() {
+    setState(() {
+      _animalsFuture = ApiService.getAnimals();
+      _statsFuture = _loadStats();
+    });
   }
 
   Future<Map<String, int>> _loadStats() async {
@@ -46,259 +48,258 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _refreshData() {
-    setState(() {
-      _animalsFuture = ApiService.getAnimals();
-      _statsFuture = _loadStats();
-    });
-  }
-
   void _navigateToAnimalDetails(Animal animal) {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => AnimalDetailsScreen(animal: animal),
-      ),
+      '/animal-details',
+      arguments: animal,
     );
-  }
-
-  void _showAdoptionDialog(Animal animal) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Apply for Adoption'),
-        content: Text('Would you like to apply to adopt ${animal.name}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _submitAdoptionApplication(animal);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryPurple),
-            child: const Text('Apply'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _submitAdoptionApplication(Animal animal) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Application submitted for ${animal.name}!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    _refreshData(); // Refresh data to potentially update status
   }
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      _homePage(),
-      AnimalListScreen(onRefresh: _refreshData),
-      const AddAnimalScreen(),
-    ];
+    final isAdmin = AuthService.isAdmin;
+    final currentUser = AuthService.currentUser;
 
     return Scaffold(
-      body: pages[_index],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
-        selectedItemColor: primaryPurple,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.pets), label: 'Animals'),
-          BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add'),
-        ],
-      ),
-    );
-  }
-
-  Widget _homePage() {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Welcome to PawsConnect',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: cuteGradient,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryPurple.withOpacity(0.12),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(10),
-                  child: const Icon(Icons.pets, color: Colors.white),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-
-            // Stats Row
-            FutureBuilder<Map<String, int>>(
-              future: _statsFuture,
-              builder: (context, snapshot) {
-                final stats = snapshot.data ?? {
-                  'available': 0,
-                  'fostered': 0,
-                  'adopted': 0,
-                  'pending': 0,
-                  'total': 0,
-                };
-
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _statCard('Available', stats['available']!.toString(), Colors.green),
-                      const SizedBox(width: 12),
-                      _statCard('Fostered', stats['fostered']!.toString(), Colors.orange),
-                      const SizedBox(width: 12),
-                      _statCard('Adopted', stats['adopted']!.toString(), Colors.purple),
-                      const SizedBox(width: 12),
-                      _statCard('Total', stats['total']!.toString(), Colors.blue),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Recent Animals Header
-            Row(
-              children: [
-                const Text(
-                  'Recent Animals',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => setState(() => _index = 1), // Navigate to Animals tab
-                  child: Text(
-                    'View All',
-                    style: TextStyle(color: primaryPurple, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Animals List
-            Expanded(
-              child: FutureBuilder<List<Animal>>(
-                future: _animalsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text('Error loading animals', style: TextStyle(color: textSecondary)),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: _refreshData,
-                            style: ElevatedButton.styleFrom(backgroundColor: primaryPurple),
-                            child: const Text('Try Again'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final list = snapshot.data ?? [];
-
-                  if (list.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.pets, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text('No animals available', style: TextStyle(fontSize: 16, color: textSecondary)),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: _refreshData,
-                            style: ElevatedButton.styleFrom(backgroundColor: primaryPurple),
-                            child: const Text('Refresh'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: list.length > 4 ? 4 : list.length, // Show max 4 animals
-                    itemBuilder: (_, i) => AnimalCard(
-                      animal: list[i],
-                      onTap: () => _navigateToAnimalDetails(list[i]),
-                      onApply: () => _showAdoptionDialog(list[i]),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statCard(String title, String value, Color color) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(colors: [color.withOpacity(0.12), Colors.white]),
-        border: Border.all(color: color.withOpacity(0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+      appBar: AppBar(
+        title: const Text('PawsConnect'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () => Navigator.pushNamed(context, '/notifications'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshData,
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              switch (value) {
+                case 'profile':
+                  Navigator.pushNamed(context, '/profile');
+                  break;
+                case 'logout':
+                  AuthService.logout();
+                  Navigator.pushReplacementNamed(context, '/');
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'profile', child: Text('My Profile')),
+              const PopupMenuItem(value: 'logout', child: Text('Logout')),
+            ],
           ),
         ],
+      ),
+      body: isAdmin ? _buildAdminDashboard() : _buildUserDashboard(),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: () => Navigator.pushNamed(context, '/add-animal'),
+              backgroundColor: primaryPurple,
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildAdminDashboard() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Welcome message
+          Text(
+            'Welcome, Admin ${AuthService.currentUser?.firstName}!',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Manage your shelter efficiently',
+            style: TextStyle(color: textSecondary),
+          ),
+          const SizedBox(height: 20),
+
+          // Stats
+          FutureBuilder<Map<String, int>>(
+            future: _statsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final stats = snapshot.data ?? {};
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _statCard('Available', stats['available'] ?? 0, Colors.green),
+                    const SizedBox(width: 12),
+                    _statCard('Pending', stats['pending'] ?? 0, Colors.orange),
+                    const SizedBox(width: 12),
+                    _statCard('Adopted', stats['adopted'] ?? 0, Colors.purple),
+                    const SizedBox(width: 12),
+                    _statCard('Total', stats['total'] ?? 0, Colors.blue),
+                  ],
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Quick Actions
+          const Text(
+            'Quick Actions',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+
+          Expanded(
+            child: GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
+                _adminActionCard('Manage Animals', Icons.pets, '/animals'),
+                _adminActionCard('Adoption Requests', Icons.assignment, '/applications'),
+                _adminActionCard('Manage Shelters', Icons.location_city, '/shelters'),
+                _adminActionCard('User Management', Icons.people, '/users'),
+                _adminActionCard('Upload Photos', Icons.photo_camera, '/camera'),
+                _adminActionCard('Analytics', Icons.analytics, '/analytics'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserDashboard() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Welcome message
+          Text(
+            'Welcome, ${AuthService.currentUser?.firstName}!',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Find your perfect furry companion',
+            style: TextStyle(color: textSecondary),
+          ),
+          const SizedBox(height: 20),
+
+          // User Features
+          Expanded(
+            child: ListView(
+              children: [
+                _userFeatureCard(
+                  'Browse Animals',
+                  Icons.pets,
+                  'Discover animals waiting for a loving home',
+                  '/animals',
+                ),
+                _userFeatureCard(
+                  'Find Shelters',
+                  Icons.map,
+                  'Locate shelters near you',
+                  '/map',
+                ),
+                _userFeatureCard(
+                  'My Applications',
+                  Icons.assignment,
+                  'Track your adoption requests',
+                  '/my-applications',
+                ),
+                _userFeatureCard(
+                  'Chat Support',
+                  Icons.chat,
+                  'Get help from our team',
+                  '/chat',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statCard(String title, int value, Color color) {
+    return Container(
+      width: 120,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            value,
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: color),
+            value.toString(),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             title,
-            style: TextStyle(color: color.withOpacity(0.8), fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _adminActionCard(String title, IconData icon, String route) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, route),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 40, color: primaryPurple),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _userFeatureCard(String title, IconData icon, String subtitle, String route) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Icon(icon, color: primaryPurple),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () => Navigator.pushNamed(context, route),
       ),
     );
   }

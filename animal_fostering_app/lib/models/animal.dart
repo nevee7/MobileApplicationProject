@@ -1,4 +1,3 @@
-// lib/models/animal.dart
 class Animal {
   final int id;
   final String name;

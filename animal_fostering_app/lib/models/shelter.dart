@@ -1,4 +1,3 @@
-// lib/models/shelter.dart
 class Shelter {
   final int id;
   final String name;
@@ -35,4 +34,16 @@ class Shelter {
       description: (json['Description'] ?? json['description']) as String?,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'Id': id,
+        'Name': name,
+        'Address': address,
+        'City': city,
+        'Phone': phone,
+        'Email': email,
+        'Latitude': latitude,
+        'Longitude': longitude,
+        'Description': description,
+      };
 }

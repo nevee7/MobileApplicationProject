@@ -9,10 +9,11 @@ namespace AnimalFostering.API.Data
 
         public DbSet<Animal> Animals { get; set; }
         public DbSet<Shelter> Shelters { get; set; }
+        public DbSet<User> Users { get; set; } // Add this line
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Simple configuration - remove complex constraints for now
+            // Animal configuration
             modelBuilder.Entity<Animal>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -22,11 +23,23 @@ namespace AnimalFostering.API.Data
                 entity.Property(e => e.Description).IsRequired();
             });
 
+            // Shelter configuration
             modelBuilder.Entity<Shelter>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired();
                 entity.Property(e => e.Address).IsRequired();
+            });
+
+            // User configuration
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Email).IsRequired();
+                entity.Property(e => e.PasswordHash).IsRequired();
+                entity.Property(e => e.FirstName).IsRequired();
+                entity.Property(e => e.LastName).IsRequired();
+                entity.HasIndex(e => e.Email).IsUnique(); // Ensure email is unique
             });
         }
     }
