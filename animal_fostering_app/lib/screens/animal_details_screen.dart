@@ -93,7 +93,7 @@ class AnimalDetailsScreen extends StatelessWidget {
 
             Text(
               '${animal.breed} • ${animal.age} years old',
-              style: TextStyle(fontSize: 18, color: textSecondary),
+              style: const TextStyle(fontSize: 18, color: textSecondary),
             ),
             const SizedBox(height: 16),
 
@@ -123,7 +123,7 @@ class AnimalDetailsScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               animal.description,
-              style: TextStyle(fontSize: 16, color: textSecondary, height: 1.5),
+              style: const TextStyle(fontSize: 16, color: textSecondary, height: 1.5),
             ),
             const SizedBox(height: 20),
 
@@ -136,7 +136,7 @@ class AnimalDetailsScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 animal.medicalNotes!,
-                style: TextStyle(fontSize: 16, color: textSecondary, height: 1.5),
+                style: const TextStyle(fontSize: 16, color: textSecondary, height: 1.5),
               ),
               const SizedBox(height: 20),
             ],
@@ -198,7 +198,7 @@ class AnimalDetailsScreen extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(color: textSecondary, fontSize: 14),
+          style: const TextStyle(color: textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 4),
         Text(

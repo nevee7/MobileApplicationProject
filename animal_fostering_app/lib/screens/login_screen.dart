@@ -371,6 +371,21 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     },
                   ),
                   
+                  // ADD THE FORGOT PASSWORD LINK HERE - Right after the toggle row
+                  const SizedBox(height: 16),
+                  
+                  // Forgot password link - ONLY SHOW IN LOGIN MODE
+                  if (_isLogin)
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/forgot-password');
+                      },
+                      child: Text(
+                        'Forgot Password?',
+                        style: TextStyle(color: primaryViolet),
+                      ),
+                    ),
+                  
                   // Demo access
                   const SizedBox(height: 30),
                   TextButton(

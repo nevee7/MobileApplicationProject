@@ -10,7 +10,7 @@ const Color cardBg = Colors.white;
 const Color textPrimary = Color(0xFF22303C);
 const Color textSecondary = Color(0xFF6B7280);
 
-final LinearGradient cuteGradient = LinearGradient(
+const LinearGradient cuteGradient = LinearGradient(
   colors: [primaryPurple, primaryViolet],
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
@@ -23,7 +23,7 @@ final BoxDecoration softCardDecoration = BoxDecoration(
     BoxShadow(
       color: primaryPurple.withOpacity(0.06),
       blurRadius: 18,
-      offset: Offset(0, 8),
+      offset: const Offset(0, 8),
     ),
   ],
 );

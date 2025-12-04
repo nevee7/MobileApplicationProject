@@ -117,7 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Manage your shelter efficiently',
             style: TextStyle(color: textSecondary),
           ),
@@ -189,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Find your perfect furry companion',
             style: TextStyle(color: textSecondary),
           ),

@@ -69,6 +69,74 @@ class AuthService {
     }
   }
 
+    static Future<String> forgotPassword(String email) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'email': email}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['token']; // Return token for next steps
+    } else {
+      throw Exception('Failed to send reset code');
+    }
+  }
+
+  static Future<String> verifyResetCode(String token, String code) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/verify-reset-code'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'token': token,
+        'resetCode': code,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['token']; // Return verified token
+    } else {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Invalid reset code');
+    }
+  }
+
+  static Future<void> resetPassword(String token, String newPassword, String confirmPassword) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/reset-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'token': token,
+        'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Failed to reset password');
+    }
+  }
+
+  static Future<void> changePassword(String currentPassword, String newPassword, String confirmPassword) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/change-password'),
+      headers: authHeaders,
+      body: json.encode({
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Failed to change password');
+    }
+  }
+
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');

@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/auth_service.dart';
 import 'theme.dart';
+import 'screens/welcome_screen.dart'; // Add this import
 import 'screens/login_screen.dart';
+import 'screens/forgot_password_screen.dart'; // Add this import
+import 'screens/verify_reset_code_screen.dart'; // Add this import
+import 'screens/reset_password_screen.dart'; // Add this import
+import 'screens/profile_screen.dart'; // Add this import
 import 'screens/dashboard_screen.dart';
 import 'screens/animal_list_screen.dart';
 import 'screens/add_animal_screen.dart';
@@ -67,7 +72,18 @@ class AnimalFosteringApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const AuthWrapper(),
+        '/': (context) => const WelcomeScreen(), // Changed from AuthWrapper
+        '/login': (context) => const LoginScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/verify-reset-code': (context) {
+          final token = ModalRoute.of(context)!.settings.arguments as String;
+          return VerifyResetCodeScreen(token: token);
+        },
+        '/reset-password': (context) {
+          final token = ModalRoute.of(context)!.settings.arguments as String;
+          return ResetPasswordScreen(token: token);
+        },
+        '/profile': (context) => const ProfileScreen(),
         '/home': (context) => const DashboardScreen(),
         '/animals': (context) => const AnimalListScreen(),
         '/add-animal': (context) => const AddAnimalScreen(),
@@ -87,6 +103,6 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return AuthService.isLoggedIn 
         ? const DashboardScreen()
-        : const LoginScreen();
+        : const WelcomeScreen(); // Changed from LoginScreen
   }
 }

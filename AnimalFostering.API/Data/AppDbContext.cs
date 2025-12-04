@@ -9,7 +9,8 @@ namespace AnimalFostering.API.Data
 
         public DbSet<Animal> Animals { get; set; }
         public DbSet<Shelter> Shelters { get; set; }
-        public DbSet<User> Users { get; set; } // Add this line
+        public DbSet<User> Users { get; set; }
+        public DbSet<PasswordReset> PasswordResets { get; set; } // Add this line
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,6 +41,24 @@ namespace AnimalFostering.API.Data
                 entity.Property(e => e.FirstName).IsRequired();
                 entity.Property(e => e.LastName).IsRequired();
                 entity.HasIndex(e => e.Email).IsUnique(); // Ensure email is unique
+            });
+
+            // PasswordReset configuration
+            modelBuilder.Entity<PasswordReset>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Email).IsRequired();
+                entity.Property(e => e.Token).IsRequired();
+                entity.Property(e => e.ResetCode).IsRequired();
+                
+                // Add index on Token and Email for faster lookups
+                entity.HasIndex(e => e.Token);
+                entity.HasIndex(e => e.Email);
+                entity.HasIndex(e => new { e.Token, e.ResetCode, e.IsUsed });
+                
+                // Set default values
+                entity.Property(e => e.IsUsed).HasDefaultValue(false);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
         }
     }

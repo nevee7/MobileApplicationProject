@@ -116,7 +116,7 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
     required List<String> options,
     required Function(String) onSelected,
   }) {
-    return Container(
+    return SizedBox(
       height: 40,
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -190,7 +190,7 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Species Filter
-                Text('Species', style: TextStyle(fontSize: 14, color: textSecondary)),
+                const Text('Species', style: TextStyle(fontSize: 14, color: textSecondary)),
                 const SizedBox(height: 4),
                 _buildFilterChip(
                   label: 'Species',
@@ -206,7 +206,7 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
                 const SizedBox(height: 12),
 
                 // Status Filter
-                Text('Status', style: TextStyle(fontSize: 14, color: textSecondary)),
+                const Text('Status', style: TextStyle(fontSize: 14, color: textSecondary)),
                 const SizedBox(height: 4),
                 _buildFilterChip(
                   label: 'Status',
@@ -222,7 +222,7 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
                 const SizedBox(height: 12),
 
                 // Shelter Filter
-                Text('Shelter', style: TextStyle(fontSize: 14, color: textSecondary)),
+                const Text('Shelter', style: TextStyle(fontSize: 14, color: textSecondary)),
                 const SizedBox(height: 4),
                 _buildFilterChip(
                   label: 'Shelter',
@@ -255,9 +255,9 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                        const Icon(Icons.error_outline, size: 64, color: Colors.grey),
                         const SizedBox(height: 16),
-                        Text('Error loading animals', style: TextStyle(color: textSecondary)),
+                        const Text('Error loading animals', style: TextStyle(color: textSecondary)),
                         const SizedBox(height: 8),
                         ElevatedButton(
                           onPressed: _refresh,
@@ -276,11 +276,11 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.pets, size: 64, color: Colors.grey),
+                        const Icon(Icons.pets, size: 64, color: Colors.grey),
                         const SizedBox(height: 16),
-                        Text('No animals found', style: TextStyle(fontSize: 16, color: textSecondary)),
+                        const Text('No animals found', style: TextStyle(fontSize: 16, color: textSecondary)),
                         const SizedBox(height: 8),
-                        Text('Try adjusting your filters', style: TextStyle(color: textSecondary)),
+                        const Text('Try adjusting your filters', style: TextStyle(color: textSecondary)),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {

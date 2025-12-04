@@ -120,14 +120,14 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _gender,
+                initialValue: _gender,
                 items: ['Unknown', 'Male', 'Female'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                 onChanged: (v) => setState(() => _gender = v ?? 'Unknown'),
                 decoration: const InputDecoration(labelText: 'Gender'),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _size,
+                initialValue: _size,
                 items: ['Small', 'Medium', 'Large'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                 onChanged: (v) => setState(() => _size = v ?? 'Medium'),
                 decoration: const InputDecoration(labelText: 'Size'),
@@ -141,7 +141,7 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _status,
+                initialValue: _status,
                 items: ['available', 'fostered', 'adopted', 'pending'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                 onChanged: (v) => setState(() => _status = v ?? 'available'),
                 decoration: const InputDecoration(labelText: 'Status'),

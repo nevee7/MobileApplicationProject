@@ -76,7 +76,7 @@ class AnimalCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           animal.name,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: textPrimary,
@@ -106,7 +106,7 @@ class AnimalCard extends StatelessWidget {
                   
                   Text(
                     '${animal.breed} - ${animal.age} years',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: textSecondary,
                       fontSize: 14,
                     ),
@@ -116,7 +116,7 @@ class AnimalCard extends StatelessWidget {
                   
                   Text(
                     '${animal.species} • ${animal.gender} • ${_getSizeDescription(animal.size)}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: textSecondary,
                       fontSize: 14,
                     ),
@@ -128,7 +128,7 @@ class AnimalCard extends StatelessWidget {
                     animal.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: textSecondary,
                       fontSize: 14,
                     ),
@@ -143,7 +143,7 @@ class AnimalCard extends StatelessWidget {
                           onPressed: onTap,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: primaryPurple,
-                            side: BorderSide(color: primaryPurple),
+                            side: const BorderSide(color: primaryPurple),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
