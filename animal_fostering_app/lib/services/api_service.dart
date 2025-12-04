@@ -82,28 +82,60 @@ class ApiService {
   // Shelters - GOOGLE PLACES API (REAL-TIME)
   static Future<List<Shelter>> getRealSheltersFromGooglePlaces() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/googleplaces/shelters/timisoara'),
-        headers: AuthService.authHeaders,  // Fixed: Changed from authHeaders to AuthService.authHeaders
-      );
+      print("Fetching shelters from Google Places API for Timisoara...");
+      
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print("Google Places API response: ${data['message']}");
-        print("Found ${data['shelters']?.length ?? 0} shelters");
-
-        if (data['shelters'] is List) {
-          final List sheltersData = data['shelters'] as List;
-          return sheltersData.map((e) => Shelter.fromJson(e as Map<String, dynamic>)).toList();
-        }
+      // Get token from AuthService
+      if (AuthService.token != null && AuthService.token!.isNotEmpty) {
+        headers['Authorization'] = 'Bearer ${AuthService.token}';
       }
 
-      // Fallback to local shelters if Google Places fails
-      return await getShelters();
+      final response = await http.get(
+        Uri.parse('$baseUrl/googleplaces/shelters/timisoara'),
+        headers: headers,
+      );
+      
+      print("Google Places response status: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        print("Google Places API response: ${data['message'] ?? 'No message'}");
+        
+        // Check if shelters data exists in the response
+        if (data['shelters'] is List) {
+          final List sheltersData = data['shelters'] as List;
+          print("Found ${sheltersData.length} shelters from API");
+          
+          List<Shelter> shelters = [];
+          for (var item in sheltersData) {
+            try {
+              final shelter = Shelter.fromJson(item);
+              if (shelter.latitude != null && shelter.longitude != null) {
+                shelters.add(shelter);
+              }
+            } catch (e) {
+              print("Error parsing shelter: $e");
+            }
+          }
+
+          return shelters;
+        } else {
+          print("No shelters data found in response");
+          return [];
+        }
+      } else {
+        print("Google Places API error: ${response.statusCode}");
+        print("Response body: ${response.body}");
+      }
+
+      return [];
 
     } catch (e) {
-      print("Error fetching real shelters from Google Places: $e");
-      return await getShelters(); // Fallback
+      print("Exception fetching real shelters from Google Places: $e");
+      return [];
     }
   }
 
@@ -111,7 +143,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/googleplaces/shelters/health'),
-        headers: AuthService.authHeaders,  // Fixed: Changed from authHeaders to AuthService.authHeaders
+        headers: AuthService.authHeaders,
       );
 
       if (response.statusCode == 200) {
@@ -214,7 +246,6 @@ class ApiService {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),
-      // Add more mock animals as needed
     ];
   }
 }
