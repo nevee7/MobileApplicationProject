@@ -15,7 +15,19 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController _mapController;
-  final LatLng _timisoaraCenter = const LatLng(45.7489, 21.2087);
+  
+  // Timișoara specific coordinates
+  final LatLng _timisoaraCenter = const LatLng(45.7489, 21.2087); // Centrul Timișoarei (Piața Victoriei)
+  final LatLng _operaRomana = const LatLng(45.7475, 21.2272); // Opera Română
+  final LatLng _catedralaMitropolitana = const LatLng(45.7533, 21.2258); // Catedrala Mitropolitană
+  final LatLng _universitate = const LatLng(45.7470, 21.2295); // Universitatea de Vest
+  
+  // Timișoara bounds
+  static final LatLngBounds _timisoaraBounds = LatLngBounds(
+    southwest: const LatLng(45.73, 21.18),  // Sud-Vest Timișoara
+    northeast: const LatLng(45.77, 21.25),  // Nord-Est Timișoara
+  );
+  
   LatLng? _currentLocation;
   bool _isLoading = true;
   bool _locationEnabled = false;
@@ -23,71 +35,98 @@ class _MapScreenState extends State<MapScreen> {
   Set<Marker> _markers = {};
   List<Shelter> _shelters = [];
   Shelter? _selectedShelter;
+  double _mapZoom = 13.0;
+  String _statusMessage = 'Încarc azilele din Timișoara...';
 
   @override
   void initState() {
     super.initState();
+    print("🌍 Inițializare hartă Timișoara...");
     _checkGooglePlacesHealth();
     _initLocation();
   }
 
   Future<void> _checkGooglePlacesHealth() async {
-    print("Checking Google Places API health...");
+    print("🔍 Verific Google Places API...");
     final health = await ApiService.checkGooglePlacesHealth();
-    print("Google Places Health: $health");
+    print("✅ Stare Google Places: $health");
     
     _usingRealShelters = health['googleApiKeyConfigured'] == true;
     
     if (_usingRealShelters) {
-      print("Using REAL shelters from Google Places API");
+      print("📍 Folosesc azile REALE din Google Places API");
+      _statusMessage = 'Caut azile reale în Timișoara...';
       await _loadRealShelters();
     } else {
-      print("Google Places API not configured, using local shelters");
+      print("⚠️ Google Places API nu este configurat, folosesc azile locale");
+      _statusMessage = 'Încarc azile locale din Timișoara...';
       await _loadLocalShelters();
     }
   }
 
   Future<void> _loadRealShelters() async {
     try {
-      print("Loading REAL shelters from Google Places...");
+      print("🔄 Încarc azile REALE din Timișoara...");
       final shelters = await ApiService.getRealSheltersFromGooglePlaces();
-      print("Got ${shelters.length} REAL shelters");
+      print("✅ Am găsit ${shelters.length} azile în Timișoara");
+      
+      // Filter for Timișoara area only
+      final timisoaraShelters = shelters.where((shelter) {
+        if (shelter.latitude == null || shelter.longitude == null) return false;
+        
+        // Check if within Timișoara bounds
+        return shelter.latitude! >= 45.73 && 
+               shelter.latitude! <= 45.77 &&
+               shelter.longitude! >= 21.18 && 
+               shelter.longitude! <= 21.25;
+      }).toList();
       
       setState(() {
-        _shelters = shelters;
+        _shelters = timisoaraShelters.isNotEmpty ? timisoaraShelters : shelters;
+        _statusMessage = 'Am găsit ${_shelters.length} azile în Timișoara';
       });
       
-      // Add markers after a short delay
-      Future.delayed(const Duration(milliseconds: 1000), () {
+      // Add markers
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           _addMarkers();
         }
       });
       
     } catch (e) {
-      print("Error loading real shelters: $e");
-      // Fallback to local shelters
+      print("❌ Eroare la încărcarea azilelor reale: $e");
+      _statusMessage = 'Eroare la încărcarea azilelor. Încerc azile locale...';
       await _loadLocalShelters();
     }
   }
 
   Future<void> _loadLocalShelters() async {
     try {
-      print("Loading local shelters...");
+      print("🔄 Încarc azile locale din Timișoara...");
       final shelters = await ApiService.getShelters();
-      print("Got ${shelters.length} local shelters");
+      
+      // Filter for Timișoara shelters
+      final timisoaraShelters = shelters.where((shelter) {
+        return shelter.city?.toLowerCase().contains('timișoara') == true ||
+               shelter.city?.toLowerCase().contains('timisoara') == true ||
+               shelter.city == null; // Include shelters without city if we have no other data
+      }).toList();
+      
+      print("✅ Am găsit ${timisoaraShelters.length} azile locale în Timișoara");
       
       setState(() {
-        _shelters = shelters;
+        _shelters = timisoaraShelters.isNotEmpty ? timisoaraShelters : shelters;
         _isLoading = false;
+        _statusMessage = 'Am găsit ${_shelters.length} azile în Timișoara';
       });
       
       _addMarkers();
       
     } catch (e) {
-      print("Error loading local shelters: $e");
+      print("❌ Eroare la încărcarea azilelor locale: $e");
       setState(() {
         _isLoading = false;
+        _statusMessage = 'Nu am putut încărca azilele. Încearcă mai târziu.';
       });
     }
   }
@@ -120,26 +159,46 @@ class _MapScreenState extends State<MapScreen> {
         return;
       }
 
+      print("📍 Obțin locația curentă în Timișoara...");
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
       );
       
-      setState(() {
-        _currentLocation = LatLng(position.latitude, position.longitude);
-        _locationEnabled = true;
-      });
+      // Check if location is in Timișoara area
+      bool isInTimisoara = position.latitude >= 45.73 && 
+                           position.latitude <= 45.77 &&
+                           position.longitude >= 21.18 && 
+                           position.longitude <= 21.25;
+      
+      if (isInTimisoara) {
+        print("✅ Locație în Timișoara: ${position.latitude}, ${position.longitude}");
+        setState(() {
+          _currentLocation = LatLng(position.latitude, position.longitude);
+          _locationEnabled = true;
+        });
+      } else {
+        print("⚠️ Locația nu este în Timișoara, folosesc centrul Timișoarei");
+        setState(() {
+          _currentLocation = _timisoaraCenter;
+          _locationEnabled = false;
+        });
+      }
       
     } catch (e) {
+      print("❌ Eroare la obținerea locației: $e");
       setState(() {
         _locationEnabled = false;
+        _currentLocation = _timisoaraCenter; // Default to Timișoara center
       });
     }
   }
 
   void _addMarkers() {
-    print("Adding markers for ${_shelters.length} shelters");
+    print("📍 Adaug markeri pe hartă...");
     
     final markers = <Marker>{};
+    int markerCount = 0;
     
     for (final shelter in _shelters) {
       if (shelter.latitude != null && 
@@ -156,7 +215,7 @@ class _MapScreenState extends State<MapScreen> {
             position: position,
             infoWindow: InfoWindow(
               title: shelter.name,
-              snippet: shelter.address ?? 'Timisoara',
+              snippet: shelter.address ?? 'Timișoara',
             ),
             icon: BitmapDescriptor.defaultMarkerWithHue(
               BitmapDescriptor.hueViolet,
@@ -164,37 +223,69 @@ class _MapScreenState extends State<MapScreen> {
             onTap: () => _onMarkerTapped(shelter),
           ),
         );
+        markerCount++;
       }
     }
     
+    print("✅ Am adăugat $markerCount markeri pe hartă");
+    
+    // Add current location marker if available
     if (_currentLocation != null && _locationEnabled) {
       markers.add(
         Marker(
-          markerId: const MarkerId('current_location'),
+          markerId: const MarkerId('my_location'),
           position: _currentLocation!,
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueBlue,
           ),
           infoWindow: const InfoWindow(
-            title: 'Your Location',
-            snippet: 'You are here',
+            title: 'Locația mea',
+            snippet: 'Sunteți aici în Timișoara',
           ),
         ),
       );
     }
+    
+    // Add Timișoara landmarks for reference
+    _addTimisoaraLandmarks(markers);
     
     setState(() {
       _markers = markers;
       _isLoading = false;
     });
     
-    // Zoom to fit all markers
+    // Zoom to show Timișoara area
     if (markers.isNotEmpty) {
-      _zoomToFitMarkers();
+      _zoomToTimisoara();
     }
   }
 
+  void _addTimisoaraLandmarks(Set<Marker> markers) {
+    // Add important landmarks in Timișoara for reference
+    markers.addAll({
+      Marker(
+        markerId: const MarkerId('opera'),
+        position: _operaRomana,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+        infoWindow: const InfoWindow(title: 'Opera Română', snippet: 'Timișoara'),
+      ),
+      Marker(
+        markerId: const MarkerId('catedrala'),
+        position: _catedralaMitropolitana,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+        infoWindow: const InfoWindow(title: 'Catedrala Mitropolitană', snippet: 'Timișoara'),
+      ),
+      Marker(
+        markerId: const MarkerId('universitate'),
+        position: _universitate,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+        infoWindow: const InfoWindow(title: 'Universitatea de Vest', snippet: 'Timișoara'),
+      ),
+    });
+  }
+
   void _onMarkerTapped(Shelter shelter) {
+    print("📍 Marker apăsat: ${shelter.name}");
     setState(() {
       _selectedShelter = shelter;
     });
@@ -203,7 +294,7 @@ class _MapScreenState extends State<MapScreen> {
       _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(
           LatLng(shelter.latitude!, shelter.longitude!),
-          15.0,
+          16.0,
         ),
       );
     }
@@ -211,47 +302,49 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+    print("🗺️ Harta Timișoarei a fost creată");
+    
+    // Restrict map to Timișoara area
+    _mapController.moveCamera(
+      CameraUpdate.newLatLngBounds(_timisoaraBounds, 50.0),
+    );
     
     // Add markers if not already added
     if (_markers.isEmpty && _shelters.isNotEmpty) {
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      Future.delayed(const Duration(milliseconds: 1000), () {
         _addMarkers();
       });
     }
   }
 
-  void _zoomToFitMarkers() {
-    if (_markers.isEmpty) return;
-    
-    try {
-      final LatLngBounds bounds = _getBounds(_markers.map((m) => m.position).toList());
+  void _zoomToTimisoara() {
+    _mapController.animateCamera(
+      CameraUpdate.newLatLngBounds(_timisoaraBounds, 50.0),
+    );
+  }
+
+  void _zoomToMyLocation() {
+    if (_currentLocation != null) {
       _mapController.animateCamera(
-        CameraUpdate.newLatLngBounds(bounds, 100.0),
+        CameraUpdate.newLatLngZoom(_currentLocation!, 16.0),
       );
-    } catch (e) {
-      print("Error zooming to markers: $e");
+    } else {
+      _mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(_timisoaraCenter, 14.0),
+      );
     }
   }
 
-  LatLngBounds _getBounds(List<LatLng> points) {
-    double? west, north, east, south;
-    
-    for (var point in points) {
-      west = west != null ? (west < point.longitude ? west : point.longitude) : point.longitude;
-      north = north != null ? (north > point.latitude ? north : point.latitude) : point.latitude;
-      east = east != null ? (east > point.longitude ? east : point.longitude) : point.longitude;
-      south = south != null ? (south < point.latitude ? south : point.latitude) : point.latitude;
-    }
-    
-    return LatLngBounds(
-      southwest: LatLng(south ?? _timisoaraCenter.latitude, west ?? _timisoaraCenter.longitude),
-      northeast: LatLng(north ?? _timisoaraCenter.latitude, east ?? _timisoaraCenter.longitude),
+  void _zoomToCentruTimisoara() {
+    _mapController.animateCamera(
+      CameraUpdate.newLatLngZoom(_timisoaraCenter, 15.0),
     );
   }
 
   Future<void> _openGoogleMaps(Shelter shelter) async {
     if (shelter.latitude == null || shelter.longitude == null) return;
     
+    final address = Uri.encodeComponent(shelter.address ?? 'Timișoara');
     final url = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${shelter.latitude},${shelter.longitude}&query_place_id=${shelter.id}'
     );
@@ -262,7 +355,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _makeCall(String phone) async {
-    final url = Uri.parse('tel:$phone');
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final url = Uri.parse('tel:$cleanPhone');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     }
@@ -305,21 +399,19 @@ class _MapScreenState extends State<MapScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (shelter.source != null)
+                        if (_usingRealShelters)
                           Container(
                             margin: const EdgeInsets.only(top: 4),
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: shelter.source == 'GooglePlaces' 
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.blue.withOpacity(0.1),
+                              color: Colors.green.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: Text(
-                              shelter.source == 'GooglePlaces' ? '🔄 Real-time' : '📍 Local',
+                            child: const Text(
+                              '📍 Azil real în Timișoara',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: shelter.source == 'GooglePlaces' ? Colors.green : Colors.blue,
+                                color: Colors.green,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -347,7 +439,7 @@ class _MapScreenState extends State<MapScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        shelter.address!,
+                        '${shelter.address!}, Timișoara',
                         style: TextStyle(color: textSecondary),
                       ),
                     ),
@@ -369,20 +461,13 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ],
               
-              if (shelter.rating != null) ...[
+              if (shelter.description != null) ...[
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.star, size: 16, color: Colors.amber),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${shelter.rating!.toStringAsFixed(1)}/5.0',
-                      style: TextStyle(
-                        color: Colors.amber[700],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                Text(
+                  shelter.description!,
+                  style: TextStyle(color: textSecondary, fontSize: 14),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
               
@@ -398,7 +483,7 @@ class _MapScreenState extends State<MapScreen> {
                         foregroundColor: Colors.white,
                       ),
                       icon: const Icon(Icons.directions, size: 18),
-                      label: const Text('Open in Maps'),
+                      label: const Text('Direcții'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -410,7 +495,7 @@ class _MapScreenState extends State<MapScreen> {
                         foregroundColor: Colors.white,
                       ),
                       icon: const Icon(Icons.call, size: 18),
-                      label: const Text('Call'),
+                      label: const Text('Sună'),
                     ),
                 ],
               ),
@@ -427,6 +512,7 @@ class _MapScreenState extends State<MapScreen> {
       _markers.clear();
       _shelters.clear();
       _selectedShelter = null;
+      _statusMessage = 'Reîncarc azilele din Timișoara...';
     });
     
     _checkGooglePlacesHealth();
@@ -436,34 +522,52 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Real Shelters in Timisoara'),
+        title: const Text('Azile în Timișoara'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshShelters,
-            tooltip: 'Refresh shelters',
+            tooltip: 'Reîncarcă azilele',
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 20),
+                  Text(
+                    _statusMessage,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
           : Stack(
               children: [
                 GoogleMap(
                   onMapCreated: _onMapCreated,
                   initialCameraPosition: CameraPosition(
                     target: _currentLocation ?? _timisoaraCenter,
-                    zoom: 13.0,
+                    zoom: _mapZoom,
                   ),
                   markers: _markers,
                   myLocationEnabled: _locationEnabled,
                   myLocationButtonEnabled: false,
                   zoomControlsEnabled: false,
+                  minMaxZoomPreference: const MinMaxZoomPreference(11.0, 18.0),
+                  cameraTargetBounds: CameraTargetBounds(_timisoaraBounds),
                 ),
                 
-                // Status indicator
+                // Status bar
                 Positioned(
                   top: 16,
                   left: 16,
@@ -484,26 +588,30 @@ class _MapScreenState extends State<MapScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          _usingRealShelters ? Icons.check_circle : Icons.info,
-                          color: _usingRealShelters ? Colors.green : Colors.orange,
+                          _shelters.isNotEmpty ? Icons.check_circle : Icons.warning,
+                          color: _shelters.isNotEmpty ? Colors.green : Colors.orange,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            _usingRealShelters
-                                ? '✅ Showing REAL shelters from Google'
-                                : '⚠️ Showing local shelters (Google API not configured)',
-                            style: TextStyle(
-                              color: _usingRealShelters ? Colors.green : Colors.orange,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${_shelters.length} found',
-                          style: TextStyle(
-                            color: primaryPurple,
-                            fontWeight: FontWeight.bold,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _shelters.isNotEmpty 
+                                    ? '${_shelters.length} azile în Timișoara'
+                                    : 'Niciun azil găsit',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                _usingRealShelters ? 'Date în timp real' : 'Date locale',
+                                style: TextStyle(
+                                  color: textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -520,9 +628,7 @@ class _MapScreenState extends State<MapScreen> {
                       FloatingActionButton.small(
                         heroTag: 'zoom_in',
                         onPressed: () {
-                          _mapController.animateCamera(
-                            CameraUpdate.zoomIn(),
-                          );
+                          _mapController.animateCamera(CameraUpdate.zoomIn());
                         },
                         backgroundColor: Colors.white,
                         child: const Icon(Icons.add, color: Colors.black),
@@ -531,9 +637,7 @@ class _MapScreenState extends State<MapScreen> {
                       FloatingActionButton.small(
                         heroTag: 'zoom_out',
                         onPressed: () {
-                          _mapController.animateCamera(
-                            CameraUpdate.zoomOut(),
-                          );
+                          _mapController.animateCamera(CameraUpdate.zoomOut());
                         },
                         backgroundColor: Colors.white,
                         child: const Icon(Icons.remove, color: Colors.black),
@@ -541,18 +645,20 @@ class _MapScreenState extends State<MapScreen> {
                       const SizedBox(height: 16),
                       FloatingActionButton.small(
                         heroTag: 'my_location',
-                        onPressed: () {
-                          if (_currentLocation != null) {
-                            _mapController.animateCamera(
-                              CameraUpdate.newLatLngZoom(_currentLocation!, 15.0),
-                            );
-                          }
-                        },
+                        onPressed: _zoomToMyLocation,
                         backgroundColor: Colors.white,
                         child: Icon(
                           Icons.my_location,
                           color: _locationEnabled ? primaryPurple : Colors.grey,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      FloatingActionButton.small(
+                        heroTag: 'centru',
+                        onPressed: _zoomToCentruTimisoara,
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.location_city, color: primaryPurple),
+                        tooltip: 'Centrul Timișoarei',
                       ),
                     ],
                   ),
@@ -582,13 +688,59 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, color: primaryPurple, size: 20),
+                          Icon(Icons.touch_app, color: primaryPurple, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Tap on any ${_usingRealShelters ? 'REAL' : ''} shelter marker for details',
+                              'Atinge un marker pentru detalii despre azil',
                               style: TextStyle(color: textSecondary),
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                
+                // No shelters found message
+                if (_shelters.isEmpty)
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.pets, size: 60, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Nu am găsit azile în Timișoara',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Încearcă să reîncarci sau verifică conexiunea',
+                            style: TextStyle(color: textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _refreshShelters,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryPurple,
+                            ),
+                            child: const Text('Reîncarcă'),
                           ),
                         ],
                       ),
