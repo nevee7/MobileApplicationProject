@@ -8,6 +8,10 @@ class Shelter {
   final double? latitude;
   final double? longitude;
   final String? description;
+  final double? rating; // Add this
+  final String? website; // Add this
+  final String? openingHours; // Add this
+  final String? source; // Add this - "Local" or "GooglePlaces"
 
   Shelter({
     required this.id,
@@ -19,6 +23,10 @@ class Shelter {
     this.latitude,
     this.longitude,
     this.description,
+    this.rating,
+    this.website,
+    this.openingHours,
+    this.source,
   });
 
   factory Shelter.fromJson(Map<String, dynamic> json) {
@@ -32,18 +40,26 @@ class Shelter {
       latitude: json['Latitude'] != null ? (json['Latitude'] as num).toDouble() : null,
       longitude: json['Longitude'] != null ? (json['Longitude'] as num).toDouble() : null,
       description: (json['Description'] ?? json['description']) as String?,
+      rating: json['Rating'] != null ? (json['Rating'] as num).toDouble() : null,
+      website: (json['Website'] ?? json['website']) as String?,
+      openingHours: (json['OpeningHours'] ?? json['openingHours']) as String?,
+      source: (json['Source'] ?? json['source']) as String?,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'Id': id,
-        'Name': name,
-        'Address': address,
-        'City': city,
-        'Phone': phone,
-        'Email': email,
-        'Latitude': latitude,
-        'Longitude': longitude,
-        'Description': description,
-      };
+    'Id': id,
+    'Name': name,
+    'Address': address,
+    'City': city,
+    'Phone': phone,
+    'Email': email,
+    'Latitude': latitude,
+    'Longitude': longitude,
+    'Description': description,
+    'Rating': rating,
+    'Website': website,
+    'OpeningHours': openingHours,
+    'Source': source,
+  };
 }

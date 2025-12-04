@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'screens/chat_screen.dart';
+import 'screens/map_screen.dart';
+import 'screens/my_applications_screen.dart';
 import 'services/auth_service.dart';
 import 'theme.dart';
 import 'screens/welcome_screen.dart'; // Add this import
@@ -86,6 +89,9 @@ class AnimalFosteringApp extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/home': (context) => const DashboardScreen(),
         '/animals': (context) => const AnimalListScreen(),
+        '/map': (context) => const MapScreen(),
+        '/my-applications': (context) => const MyApplicationsScreen(),
+        '/chat': (context) => const ChatScreen(),
         '/add-animal': (context) => const AddAnimalScreen(),
         '/animal-details': (context) {
           final animal = ModalRoute.of(context)!.settings.arguments as Animal;

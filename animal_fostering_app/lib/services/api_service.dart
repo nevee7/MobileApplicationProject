@@ -4,6 +4,7 @@ import '../models/animal.dart';
 import '../models/shelter.dart';
 import '../models/adoption_application.dart';
 import 'auth_service.dart';
+import '../models/user.dart';
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:5000/api';
@@ -63,7 +64,7 @@ class ApiService {
     return response.statusCode == 200;
   }
 
-  // Shelters
+  // Shelters - LOCAL DATABASE
   static Future<List<Shelter>> getShelters() async {
     final response = await http.get(
       Uri.parse('$baseUrl/shelters'),
@@ -74,7 +75,53 @@ class ApiService {
       final List data = jsonDecode(response.body) as List;
       return data.map((e) => Shelter.fromJson(e as Map<String, dynamic>)).toList();
     } else {
-      throw Exception('Failed to load shelters');
+      throw Exception('Failed to load shelters: ${response.statusCode}');
+    }
+  }
+
+  // Shelters - GOOGLE PLACES API (REAL-TIME)
+  static Future<List<Shelter>> getRealSheltersFromGooglePlaces() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/googleplaces/shelters/timisoara'),
+        headers: AuthService.authHeaders,  // Fixed: Changed from authHeaders to AuthService.authHeaders
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print("Google Places API response: ${data['message']}");
+        print("Found ${data['shelters']?.length ?? 0} shelters");
+
+        if (data['shelters'] is List) {
+          final List sheltersData = data['shelters'] as List;
+          return sheltersData.map((e) => Shelter.fromJson(e as Map<String, dynamic>)).toList();
+        }
+      }
+
+      // Fallback to local shelters if Google Places fails
+      return await getShelters();
+
+    } catch (e) {
+      print("Error fetching real shelters from Google Places: $e");
+      return await getShelters(); // Fallback
+    }
+  }
+
+  static Future<Map<String, dynamic>> checkGooglePlacesHealth() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/googleplaces/shelters/health'),
+        headers: AuthService.authHeaders,  // Fixed: Changed from authHeaders to AuthService.authHeaders
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+
+      return {'status': 'ERROR', 'googleApiKeyConfigured': false};
+
+    } catch (e) {
+      return {'status': 'ERROR', 'googleApiKeyConfigured': false, 'error': e.toString()};
     }
   }
 
@@ -114,6 +161,38 @@ class ApiService {
     );
 
     return response.statusCode == 200;
+  }
+
+  // User Management
+  static Future<List<User>> getUsers() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/users'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body) as List;
+      return data.map((e) => User.fromJson(e as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception('Failed to load users');
+    }
+  }
+
+  // Helper methods
+  static Future<List<Shelter>> getSheltersWithFallback() async {
+    try {
+      // First try Google Places API for real shelters
+      final googleShelters = await getRealSheltersFromGooglePlaces();
+      if (googleShelters.isNotEmpty) {
+        return googleShelters;
+      }
+      
+      // Fallback to local shelters
+      return await getShelters();
+    } catch (e) {
+      // Last resort: return empty list
+      return [];
+    }
   }
 
   // Mock data fallback
