@@ -98,14 +98,14 @@ namespace AnimalFostering.API.Controllers
                 new Shelter
                 {
                     Id = 1,
-                    Name = "Animal Protection Association Timisoara",
-                    Address = "Bega Street 1, Timisoara 300001",
-                    City = "Timisoara",
-                    Phone = "+40 256 494 320",
-                    Email = "contact@protectia-animalelor-tm.ro",
-                    Latitude = 45.752821,
-                    Longitude = 21.228017,
-                    Description = "Main animal protection association in Timisoara, established in 1992. Provides shelter, medical care, and adoption services.",
+                    Name = "Cabinet Veterinar Happy Paws & Tails Vet",
+                    Address = "Str. Mureș 49, Timișoara 300425",
+                    City = "Timișoara",
+                    Phone = "0771173078",
+                    Email = "happytailstimisoara@gmail.com",
+                    Latitude = 45.7703424,
+                    Longitude = 21.200896,
+                    Description = "Adopții, donații, salvări, toate în Timișoara 🐕80+ câini în grijă 🐾 ONG pe bază de voluntariat",
                     Source = "Verified"
                 },
                 new Shelter

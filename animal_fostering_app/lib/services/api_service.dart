@@ -183,12 +183,13 @@ class ApiService {
   }
 
   static Future<bool> updateAdoptionApplication(int id, String status, String? adminNotes) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/applications/$id'),
+    final response = await http.patch(
+      Uri.parse('$baseUrl/applications/$id/status'),
       headers: AuthService.authHeaders,
       body: jsonEncode({
         'status': status,
         'adminNotes': adminNotes,
+        'reviewedByAdminId': AuthService.currentUser?.id,
       }),
     );
 
@@ -208,6 +209,65 @@ class ApiService {
     } else {
       throw Exception('Failed to load users');
     }
+  }
+
+  // For user's own applications
+  static Future<List<AdoptionApplication>> getMyApplications() async {
+    final userId = AuthService.currentUser?.id;
+    if (userId == null) throw Exception('User not logged in');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/$userId/applications'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body) as List;
+      return data.map((e) => AdoptionApplication.fromJson(e as Map<String, dynamic>)).toList();
+    } else {
+      throw Exception('Failed to load applications');
+    }
+  }
+
+  // Send message to admin/user
+  static Future<bool> sendMessage(int? receiverId, String message) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/messages'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode({
+        'receiverId': receiverId,
+        'message': message,
+        'messageType': 'Text',
+      }),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  // Update user status (activate/deactivate)
+  static Future<bool> updateUserStatus(int userId, bool isActive) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/users/$userId/status'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode({
+        'isActive': isActive,
+      }),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  // Update user role
+  static Future<bool> updateUserRole(int userId, String role) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/users/$userId/role'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode({
+        'role': role,
+      }),
+    );
+
+    return response.statusCode == 200;
   }
 
   // Helper methods
@@ -247,5 +307,60 @@ class ApiService {
         updatedAt: DateTime.now(),
       ),
     ];
+  }
+
+  // Get application statistics
+  static Future<Map<String, int>> getApplicationStats() async {
+    try {
+      final applications = await getAdoptionApplications();
+      final pending = applications.where((a) => a.isPending).length;
+      final approved = applications.where((a) => a.isApproved).length;
+      final rejected = applications.where((a) => a.isRejected).length;
+      final withdrawn = applications.where((a) => a.isWithdrawn).length;
+      
+      return {
+        'pending': pending,
+        'approved': approved,
+        'rejected': rejected,
+        'withdrawn': withdrawn,
+        'total': applications.length,
+      };
+    } catch (e) {
+      return {
+        'pending': 0,
+        'approved': 0,
+        'rejected': 0,
+        'withdrawn': 0,
+        'total': 0,
+      };
+    }
+  }
+
+  // Get animal statistics
+  static Future<Map<String, int>> getAnimalStats() async {
+    try {
+      final animals = await getAnimals();
+      final available = animals.where((a) => a.status.toLowerCase() == 'available').length;
+      const pending = 0;
+      const adopted = 0;
+      const fostered = 0;
+      const total = 0;
+      
+      return {
+        'available': available,
+        'pending': pending,
+        'adopted': adopted,
+        'fostered': fostered,
+        'total': total,
+      };
+    } catch (e) {
+      return {
+        'available': 0,
+        'pending': 0,
+        'adopted': 0,
+        'fostered': 0,
+        'total': 0,
+      };
+    }
   }
 }

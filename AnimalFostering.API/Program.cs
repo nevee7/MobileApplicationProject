@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using AnimalFostering.API.Data;
 using AnimalFostering.API.Models;
-using AnimalFostering.API.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,22 +12,21 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<GooglePlacesController>();
 
 // Add DbContext with PostgreSQL
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
-{
-    connectionString = "Host=localhost;Port=5432;Database=AnimalFostering;Username=postgres;Password=password;";
-}
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? "Host=localhost;Port=5432;Database=AnimalFostering;Username=postgres;Password=password;";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // Configure JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-at-least-32-chars-long!";
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "AnimalFosteringAPI";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "AnimalFosteringApp";
+var jwtKey = builder.Configuration["Jwt:Key"] 
+    ?? "your-super-secret-key-at-least-32-chars-long!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] 
+    ?? "AnimalFosteringAPI";
+var jwtAudience = builder.Configuration["Jwt:Audience"] 
+    ?? "AnimalFosteringApp";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -69,33 +67,10 @@ try
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         context.Database.Migrate();
         
-        // Seed initial shelters if needed
-        if (!context.Shelters.Any())
-        {
-            context.Shelters.AddRange(
-                new Shelter
-                {
-                    Name = "Happy Paws Shelter",
-                    Address = "123 Main Street",
-                    City = "Timișoara",
-                    Phone = "+40 123 456 789",
-                    Email = "contact@happypaws.ro"
-                },
-                new Shelter
-                {
-                    Name = "Animal Rescue Center", 
-                    Address = "456 Oak Avenue",
-                    City = "Timișoara",
-                    Phone = "+40 234 567 890",
-                    Email = "info@animalrescue.ro"
-                }
-            );
-            context.SaveChanges();
-        }
-        
-        // Create default admin user if no users exist
+        // Seed initial data if needed
         if (!context.Users.Any())
         {
+            // Create default admin user
             var adminUser = new User
             {
                 Email = "admin@pawsconnect.com",
@@ -126,11 +101,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFlutterApp");
-
-// Add authentication & authorization middleware (ORDER MATTERS!)
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Urls.Add("http://0.0.0.0:5000");

@@ -18,6 +18,14 @@ class AuthService {
     }
   }
 
+  static Map<String, String> get authHeaders {
+    return {
+      'Content-Type': 'application/json',
+      if (_token != null && _token!.isNotEmpty)
+        'Authorization': 'Bearer $_token',
+    };
+  }
+
   static String? get token => _token;
   static User? get currentUser => _currentUser;
   static bool get isLoggedIn => _token != null && _currentUser != null;
@@ -153,10 +161,4 @@ class AuthService {
     _currentUser = authResponse.user;
   }
 
-  static Map<String, String> get authHeaders {
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
 }

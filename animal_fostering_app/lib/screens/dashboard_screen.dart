@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import '../models/animal.dart';
-import '../widgets/animal_card.dart';
 import '../theme.dart';
 import 'animal_list_screen.dart';
 import 'map_screen.dart';
@@ -135,7 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Manage your shelter efficiently',
             style: TextStyle(color: textSecondary),
           ),
@@ -258,32 +257,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ));
   }
 
-  Widget _adminActionCard(String title, IconData icon, String route) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () => Navigator.pushNamed(context, route),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 40, color: primaryPurple),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                ),
+Widget _adminActionCard(String title, IconData icon, String route) {
+  return Card(
+    elevation: 2,
+    child: InkWell(
+      onTap: () {
+        if (route == '/applications') {
+          Navigator.pushNamed(context, '/admin/applications');
+        } else if (route == '/users') {
+          Navigator.pushNamed(context, '/admin/users');
+        } else {
+          Navigator.pushNamed(context, route);
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: primaryPurple),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // User Home Screen
@@ -356,7 +363,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 fontWeight: FontWeight.normal,
               ),
             ),
-            Text(
+            const Text(
               'Find your furry friend',
               style: TextStyle(
                 fontSize: 14,
@@ -404,12 +411,12 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.search, color: textSecondary),
+                    const Icon(Icons.search, color: textSecondary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Search animals by name, breed, or species...',
                           hintStyle: TextStyle(color: textSecondary),
                           border: InputBorder.none,
@@ -419,7 +426,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     ),
                     if (_searchQuery.isNotEmpty)
                       IconButton(
-                        icon: Icon(Icons.clear, color: textSecondary, size: 20),
+                        icon: const Icon(Icons.clear, color: textSecondary, size: 20),
                         onPressed: () {
                           _searchController.clear();
                           _searchAnimals('');
@@ -485,13 +492,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ),
                       );
                     },
-                    child: Row(
+                    child: const Row(
                       children: [
                         Text(
                           'Browse All',
                           style: TextStyle(color: primaryPurple),
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Icon(Icons.arrow_forward, size: 16, color: primaryPurple),
                       ],
                     ),
@@ -510,11 +517,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   }
                   
                   if (snapshot.hasError) {
-                    return Center(
+                    return const Center(
                       child: Column(
                         children: [
                           Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           Text(
                             'Error loading animals',
                             style: TextStyle(color: textSecondary),
@@ -558,7 +565,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                           _searchQuery.isEmpty
                               ? 'No pets available right now'
                               : 'No pets found for "$_searchQuery"',
-                          style: TextStyle(color: textSecondary),
+                          style: const TextStyle(color: textSecondary),
                         ),
                         const SizedBox(height: 8),
                         if (_searchQuery.isNotEmpty)
@@ -567,7 +574,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                               _searchController.clear();
                               _searchAnimals('');
                             },
-                            child: Text(
+                            child: const Text(
                               'Clear search',
                               style: TextStyle(color: primaryPurple),
                             ),
@@ -671,7 +678,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               ),
               Text(
                 title,
-                style: TextStyle(
+                style: const TextStyle(
                   color: textSecondary,
                   fontSize: 12,
                 ),
@@ -767,7 +774,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   
                   Text(
                     animal.breed,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
                       color: textSecondary,
                     ),
@@ -779,21 +786,21 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   
                   Row(
                     children: [
-                      Icon(Icons.cake, size: 12, color: textSecondary),
+                      const Icon(Icons.cake, size: 12, color: textSecondary),
                       const SizedBox(width: 4),
                       Text(
                         '${animal.age} yrs',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           color: textSecondary,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Icon(Icons.transgender, size: 12, color: textSecondary),
+                      const Icon(Icons.transgender, size: 12, color: textSecondary),
                       const SizedBox(width: 4),
                       Text(
                         animal.gender,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           color: textSecondary,
                         ),
@@ -813,7 +820,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     ),
                     child: Text(
                       animal.species,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
                         color: primaryPurple,
                         fontWeight: FontWeight.w500,

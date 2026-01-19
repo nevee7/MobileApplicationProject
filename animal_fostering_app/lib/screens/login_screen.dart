@@ -166,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 _isLogin 
                                     ? 'Sign in to continue your pet journey' 
                                     : 'Join our pet loving community',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 16,
                                   color: textSecondary,
                                 ),
@@ -351,14 +351,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 _isLogin
                                     ? "Don't have an account?"
                                     : "Already have an account?",
-                                style: TextStyle(color: textSecondary),
+                                style: const TextStyle(color: textSecondary),
                               ),
                               const SizedBox(width: 8),
                               GestureDetector(
                                 onTap: _isLoading ? null : _toggleMode,
                                 child: Text(
                                   _isLogin ? "Sign up" : "Sign in",
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: primaryPurple,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -380,7 +380,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       onPressed: () {
                         Navigator.pushNamed(context, '/forgot-password');
                       },
-                      child: Text(
+                      child: const Text(
                         'Forgot Password?',
                         style: TextStyle(color: primaryViolet),
                       ),
@@ -394,7 +394,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       _passwordController.text = 'admin123';
                       _submit();
                     },
-                    child: Text(
+                    child: const Text(
                       'Use Demo Admin Account',
                       style: TextStyle(color: primaryViolet),
                     ),

@@ -1,4 +1,8 @@
 // lib/screens/animal_details_screen.dart
+import 'package:animal_fostering_app/models/adoption_application.dart';
+import 'package:animal_fostering_app/screens/edit_animal_screen.dart';
+import 'package:animal_fostering_app/services/api_service.dart';
+import 'package:animal_fostering_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import '../models/animal.dart';
 import '../theme.dart';
@@ -32,15 +36,95 @@ class AnimalDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _submitAdoptionApplication(BuildContext context) {
-    // In a real app, this would call your API
+Future<void> _submitAdoptionApplication(BuildContext context) async {
+  final currentUser = AuthService.currentUser;
+  if (currentUser == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Application submitted for ${animal.name}!'),
-        backgroundColor: Colors.green,
+      const SnackBar(
+        content: Text('Please login to apply for adoption'),
+        backgroundColor: Colors.red,
       ),
     );
+    return;
   }
+
+  final TextEditingController messageController = TextEditingController();
+  
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Adoption Application'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Applying for ${animal.name}'),
+          const SizedBox(height: 16),
+          TextField(
+            controller: messageController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Message (optional)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Navigator.pop(context);
+            try {
+              final application = AdoptionApplication(
+                id: DateTime.now().millisecondsSinceEpoch,
+                userId: currentUser.id,
+                animalId: animal.id,
+                status: 'Pending',
+                message: messageController.text.trim().isEmpty ? null : messageController.text.trim(),
+                adminNotes: null,
+                applicationDate: DateTime.now(),
+                reviewedDate: null,
+                reviewedByAdminId: null,
+                user: currentUser,
+                animal: animal,
+              );
+
+              final success = await ApiService.createAdoptionApplication(application);
+              
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Application submitted for ${animal.name}!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to submit application'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: primaryPurple),
+          child: const Text('Submit Application'),
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +138,21 @@ class AnimalDetailsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          if (AuthService.isAdmin)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditAnimalScreen(animal: animal),
+                  ),
+                );
+                if (result == true) {
+                  Navigator.pop(context, true); // Refresh animal details
+                }
+    },
+  ),
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {

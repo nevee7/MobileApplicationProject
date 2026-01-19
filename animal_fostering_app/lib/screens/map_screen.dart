@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../services/api_service.dart';
 import '../models/shelter.dart';
 import '../theme.dart';
 
@@ -19,7 +18,7 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _currentLocation;
   bool _isLoading = true;
   bool _locationEnabled = false;
-  bool _usingGooglePlaces = false;
+  final bool _usingGooglePlaces = false;
   Set<Marker> _markers = {};
   List<Shelter> _shelters = [];
   Shelter? _selectedShelter;
@@ -161,7 +160,7 @@ class _MapScreenState extends State<MapScreen> {
       print("Getting current location...");
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: Duration(seconds: 5),
+        timeLimit: const Duration(seconds: 5),
       );
       
       print("Location obtained: ${position.latitude}, ${position.longitude}");
@@ -273,7 +272,7 @@ class _MapScreenState extends State<MapScreen> {
     _mapController = controller;
     
     // Add markers after a short delay to ensure map is ready
-    Future.delayed(Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (_shelters.isNotEmpty && _markers.isEmpty) {
         print("Map ready, adding markers...");
         _addMarkers();
@@ -403,32 +402,32 @@ class _MapScreenState extends State<MapScreen> {
                 ],
               ),
               
-              if (shelter.address != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.location_on, size: 16, color: textSecondary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '${shelter.address!}, Timisoara',
-                        style: TextStyle(color: textSecondary),
-                      ),
+              ...[
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on, size: 16, color: textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${shelter.address}, Timisoara',
+                      style: const TextStyle(color: textSecondary),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
+            ],
               
               if (shelter.phone != null) ...[
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.phone, size: 16, color: textSecondary),
+                    const Icon(Icons.phone, size: 16, color: textSecondary),
                     const SizedBox(width: 8),
                     Text(
                       shelter.phone!,
-                      style: TextStyle(color: textSecondary),
+                      style: const TextStyle(color: textSecondary),
                     ),
                   ],
                 ),
@@ -438,7 +437,7 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(height: 8),
                 Text(
                   shelter.description!,
-                  style: TextStyle(color: textSecondary, fontSize: 14),
+                  style: const TextStyle(color: textSecondary, fontSize: 14),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -508,7 +507,7 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(height: 20),
                   Text(
                     _statusMessage,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: textSecondary,
                       fontSize: 16,
                     ),
@@ -578,7 +577,7 @@ class _MapScreenState extends State<MapScreen> {
                               ),
                               Text(
                                 _statusMessage,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: textSecondary,
                                   fontSize: 12,
                                 ),
@@ -626,7 +625,7 @@ class _MapScreenState extends State<MapScreen> {
                           );
                         },
                         backgroundColor: Colors.white,
-                        child: Icon(
+                        child: const Icon(
                           Icons.my_location,
                           color: primaryPurple,
                         ),
@@ -657,10 +656,10 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ],
                       ),
-                      child: Row(
+                      child: const Row(
                         children: [
                           Icon(Icons.touch_app, color: primaryPurple, size: 20),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'Tap any marker for shelter details',

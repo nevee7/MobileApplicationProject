@@ -119,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 4),
                   Text(
                     user?.email ?? '',
-                    style: TextStyle(color: textSecondary),
+                    style: const TextStyle(color: textSecondary),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -359,7 +359,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             width: 100,
             child: Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                 color: textSecondary,
                 fontWeight: FontWeight.w500,
               ),

@@ -75,7 +75,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Enter your email address and we\'ll send you a code to reset your password.',
               style: TextStyle(color: textSecondary, fontSize: 16),
             ),

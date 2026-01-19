@@ -1,3 +1,4 @@
+import 'package:animal_fostering_app/screens/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/chat_screen.dart';
@@ -16,6 +17,8 @@ import 'screens/animal_list_screen.dart';
 import 'screens/add_animal_screen.dart';
 import 'screens/animal_details_screen.dart';
 import 'models/animal.dart';
+import 'screens/admin_manage_applications_screen.dart';
+import 'screens/admin_manage_users_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,7 +72,7 @@ class AnimalFosteringApp extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: primaryPurple, width: 2),
+            borderSide: const BorderSide(color: primaryPurple, width: 2),
           ),
         ),
       ),
@@ -97,6 +100,9 @@ class AnimalFosteringApp extends StatelessWidget {
           final animal = ModalRoute.of(context)!.settings.arguments as Animal;
           return AnimalDetailsScreen(animal: animal);
         },
+        '/admin/applications': (context) => const AdminManageApplicationsScreen(),
+        '/admin/users': (context) => const AdminManageUsersScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
       },
     );
   }

@@ -98,7 +98,7 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Enter the 6-digit code sent to your email',
               style: TextStyle(color: textSecondary, fontSize: 16),
             ),
@@ -156,7 +156,7 @@ class _VerifyResetCodeScreenState extends State<VerifyResetCodeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   "Didn't receive code?",
                   style: TextStyle(color: textSecondary),
                 ),
