@@ -85,6 +85,8 @@ try
             context.Users.Add(adminUser);
             context.SaveChanges();
         }
+
+        SeedData.Initialize(context);
     }
     Console.WriteLine("Database initialized successfully.");
 }

@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/animal.dart';
 import '../models/shelter.dart';
 import '../models/adoption_application.dart';
 import 'auth_service.dart';
 import '../models/user.dart';
+import '../models/app_notification.dart';
+import '../models/report_definition.dart';
+import '../models/alert_rule.dart';
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:5000/api';
@@ -65,9 +69,12 @@ class ApiService {
   }
 
   // Shelters - LOCAL DATABASE
-  static Future<List<Shelter>> getShelters() async {
+  static Future<List<Shelter>> getShelters({bool includeInactive = false}) async {
+    final uri = Uri.parse('$baseUrl/shelters').replace(
+      queryParameters: includeInactive ? {'includeInactive': 'true'} : null,
+    );
     final response = await http.get(
-      Uri.parse('$baseUrl/shelters'),
+      uri,
       headers: AuthService.authHeaders,
     );
 
@@ -172,14 +179,31 @@ class ApiService {
     }
   }
 
-  static Future<bool> createAdoptionApplication(AdoptionApplication application) async {
+  static Future<bool> createAdoptionApplication({
+    required int animalId,
+    String? message,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/applications'),
       headers: AuthService.authHeaders,
-      body: jsonEncode(application.toJson()),
+      body: jsonEncode({
+        'animalId': animalId,
+        'message': message,
+      }),
     );
 
-    return response.statusCode == 200 || response.statusCode == 201;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    }
+
+    if (response.body.isNotEmpty) {
+      final data = jsonDecode(response.body);
+      if (data is Map<String, dynamic> && data['message'] != null) {
+        throw Exception(data['message']);
+      }
+    }
+
+    throw Exception('Failed to submit application');
   }
 
   static Future<bool> updateAdoptionApplication(int id, String status, String? adminNotes) async {
@@ -193,7 +217,59 @@ class ApiService {
       }),
     );
 
-    return response.statusCode == 200;
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  static Future<Map<String, dynamic>> getShelterDetails(int id) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/shelters/$id/details'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+
+    throw Exception('Failed to load shelter details');
+  }
+
+  static Future<bool> createShelter(Shelter shelter) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/shelters'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode(shelter.toJson()),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  static Future<bool> updateShelter(Shelter shelter) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/shelters/${shelter.id}'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode(shelter.toJson()),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  static Future<bool> updateShelterStatus(int id, bool isActive) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/shelters/$id/status'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode({'isActive': isActive}),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  static Future<bool> deleteShelter(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/shelters/$id'),
+      headers: AuthService.authHeaders,
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
   }
 
   // User Management
@@ -230,19 +306,242 @@ class ApiService {
   }
 
   // Send message to admin/user
-  static Future<bool> sendMessage(int? receiverId, String message) async {
+  static Future<bool> sendMessage({
+  int? receiverId,
+  required String content,
+  String messageType = 'Text',
+}) async {
+  final headers = <String, String>{
+    ...AuthService.authHeaders,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  final body = {
+    // Use the SAME names as the C# DTO to avoid binding issues
+    'ReceiverId': receiverId,
+    'Message': content,
+    'MessageType': messageType,
+  };
+
+  final res = await http.post(
+    Uri.parse('$baseUrl/messages'),
+    headers: headers,
+    body: jsonEncode(body),
+  );
+
+  // IMPORTANT: print what the server says
+  debugPrint('sendMessage status: ${res.statusCode}');
+  debugPrint('sendMessage body: ${res.body}');
+
+  return res.statusCode == 200 || res.statusCode == 201;
+}
+
+
+
+  static Future<List<dynamic>> getMessages() async {
+  final res = await http.get(
+    Uri.parse('$baseUrl/messages'),
+    headers: AuthService.authHeaders,
+  );
+
+  // If backend says "no" or anything weird -> return empty list
+  if (res.statusCode != 200) return [];
+
+  if (res.body.trim().isEmpty || res.body.trim() == "null") return [];
+
+  final decoded = jsonDecode(res.body);
+
+  // Your backend controller returns Ok(messages) => should be a JSON array
+  if (decoded is List) return decoded;
+
+  // In case you ever wrap it like { "messages": [...] }
+  if (decoded is Map<String, dynamic> && decoded['messages'] is List) {
+    return decoded['messages'] as List;
+  }
+
+  // Fallback
+  return [];
+}
+
+  // Notifications
+  static Future<List<AppNotification>> getNotifications() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body) as List;
+      return data.map((e) => AppNotification.fromJson(e as Map<String, dynamic>)).toList();
+    }
+
+    throw Exception('Failed to load notifications');
+  }
+
+  static Future<bool> markNotificationRead(int id) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/notifications/$id/read'),
+      headers: AuthService.authHeaders,
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  static Future<bool> markAllNotificationsRead() async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/notifications/read-all'),
+      headers: AuthService.authHeaders,
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  static Future<bool> clearNotifications() async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/notifications/clear'),
+      headers: AuthService.authHeaders,
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  // Reports
+  static Future<List<ReportDefinition>> getReports() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/reports'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body) as List;
+      return data.map((e) => ReportDefinition.fromJson(e as Map<String, dynamic>)).toList();
+    }
+
+    throw Exception('Failed to load reports');
+  }
+
+  static Future<bool> createReport({
+    required String name,
+    String? description,
+    required String metric,
+    String? filtersJson,
+  }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/messages'),
+      Uri.parse('$baseUrl/reports'),
       headers: AuthService.authHeaders,
       body: jsonEncode({
-        'receiverId': receiverId,
-        'message': message,
-        'messageType': 'Text',
+        'name': name,
+        'description': description,
+        'metric': metric,
+        'filtersJson': filtersJson,
       }),
     );
 
     return response.statusCode == 200 || response.statusCode == 201;
   }
+
+  static Future<bool> updateReport({
+    required int id,
+    required String name,
+    String? description,
+    required String metric,
+    String? filtersJson,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/reports/$id'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode({
+        'name': name,
+        'description': description,
+        'metric': metric,
+        'filtersJson': filtersJson,
+      }),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  static Future<bool> deleteReport(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/reports/$id'),
+      headers: AuthService.authHeaders,
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  // Alerts
+  static Future<List<AlertRule>> getAlerts() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/alerts'),
+      headers: AuthService.authHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body) as List;
+      return data.map((e) => AlertRule.fromJson(e as Map<String, dynamic>)).toList();
+    }
+
+    throw Exception('Failed to load alerts');
+  }
+
+  static Future<bool> createAlert({
+    required String name,
+    required String metric,
+    required String comparison,
+    required int threshold,
+    required bool isActive,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/alerts'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode({
+        'name': name,
+        'metric': metric,
+        'comparison': comparison,
+        'threshold': threshold,
+        'isActive': isActive,
+      }),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  static Future<bool> updateAlert({
+    required int id,
+    required String name,
+    required String metric,
+    required String comparison,
+    required int threshold,
+    required bool isActive,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/alerts/$id'),
+      headers: AuthService.authHeaders,
+      body: jsonEncode({
+        'name': name,
+        'metric': metric,
+        'comparison': comparison,
+        'threshold': threshold,
+        'isActive': isActive,
+      }),
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+  static Future<bool> deleteAlert(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/alerts/$id'),
+      headers: AuthService.authHeaders,
+    );
+
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
+
+
 
   // Update user status (activate/deactivate)
   static Future<bool> updateUserStatus(int userId, bool isActive) async {

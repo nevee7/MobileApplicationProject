@@ -48,10 +48,20 @@ namespace AnimalFostering.API.Controllers
                 query = query.Where(a => a.Status.ToLower() == status.ToLower());
             }
 
-            // Filter by shelter (you'll need to implement shelter logic)
-            if (!string.IsNullOrEmpty(shelter) && int.TryParse(shelter, out int shelterId))
+            // Filter by shelter (id or name)
+            if (!string.IsNullOrEmpty(shelter))
             {
-                query = query.Where(a => a.ShelterId == shelterId);
+                if (int.TryParse(shelter, out int shelterId))
+                {
+                    query = query.Where(a => a.ShelterId == shelterId);
+                }
+                else
+                {
+                    query = query.Where(a =>
+                        _context.Shelters.Any(s =>
+                            s.Id == a.ShelterId &&
+                            s.Name.ToLower() == shelter.ToLower()));
+                }
             }
 
             var animals = await query.ToListAsync();

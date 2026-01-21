@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/app_notification.dart';
+import '../services/api_service.dart';
 import '../theme.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -9,62 +11,50 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final List<NotificationItem> _notifications = [
-    NotificationItem(
-      id: 1,
-      title: 'Application Approved',
-      message: 'Your adoption application for Luna has been approved!',
-      type: 'success',
-      time: DateTime.now().subtract(const Duration(hours: 2)),
-      isRead: false,
-    ),
-    NotificationItem(
-      id: 2,
-      title: 'New Message',
-      message: 'Admin replied to your question about the adoption process',
-      type: 'info',
-      time: DateTime.now().subtract(const Duration(days: 1)),
-      isRead: true,
-    ),
-    NotificationItem(
-      id: 3,
-      title: 'Application Received',
-      message: 'Your application for Max has been received and is being reviewed',
-      type: 'info',
-      time: DateTime.now().subtract(const Duration(days: 2)),
-      isRead: true,
-    ),
-  ];
+  late Future<List<AppNotification>> _notificationsFuture;
 
-  void _markAsRead(int id) {
+  @override
+  void initState() {
+    super.initState();
+    _refreshNotifications();
+  }
+
+  void _refreshNotifications() {
     setState(() {
-      _notifications.firstWhere((n) => n.id == id).isRead = true;
+      _notificationsFuture = ApiService.getNotifications();
     });
   }
 
-  void _markAllAsRead() {
-    setState(() {
-      for (var notification in _notifications) {
-        notification.isRead = true;
-      }
-    });
+  Future<void> _markAsRead(int id) async {
+    final success = await ApiService.markNotificationRead(id);
+    if (success) {
+      _refreshNotifications();
+    }
   }
 
-  void _clearAll() {
-    setState(() {
-      _notifications.clear();
-    });
+  Future<void> _markAllAsRead() async {
+    final success = await ApiService.markAllNotificationsRead();
+    if (success) {
+      _refreshNotifications();
+    }
+  }
+
+  Future<void> _clearAll() async {
+    final success = await ApiService.clearNotifications();
+    if (success) {
+      _refreshNotifications();
+    }
   }
 
   Color _getNotificationColor(String type) {
     switch (type) {
-      case 'success':
+      case 'Success':
         return Colors.green;
-      case 'warning':
+      case 'Warning':
         return Colors.orange;
-      case 'error':
+      case 'Error':
         return Colors.red;
-      case 'info':
+      case 'Info':
       default:
         return primaryPurple;
     }
@@ -72,13 +62,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   IconData _getNotificationIcon(String type) {
     switch (type) {
-      case 'success':
+      case 'Success':
         return Icons.check_circle;
-      case 'warning':
+      case 'Warning':
         return Icons.warning;
-      case 'error':
+      case 'Error':
         return Icons.error;
-      case 'info':
+      case 'Info':
       default:
         return Icons.info;
     }
@@ -103,102 +93,132 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-          if (_notifications.any((n) => !n.isRead))
-            IconButton(
-              icon: const Icon(Icons.mark_email_read),
-              onPressed: _markAllAsRead,
-              tooltip: 'Mark all as read',
-            ),
-          if (_notifications.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _clearAll,
-              tooltip: 'Clear all',
-            ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshNotifications,
+            tooltip: 'Refresh',
+          ),
         ],
       ),
-      body: _notifications.isEmpty
-          ? Center(
+      body: FutureBuilder<List<AppNotification>>(
+        future: _notificationsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.notifications_off,
-                    size: 100,
-                    color: Colors.grey.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'No Notifications',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'You\'re all caught up!',
-                    style: TextStyle(color: textSecondary),
+                  const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text('Error loading notifications'),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _refreshNotifications,
+                    style: ElevatedButton.styleFrom(backgroundColor: primaryPurple),
+                    child: const Text('Try Again'),
                   ),
                 ],
               ),
-            )
-          : ListView.builder(
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final notification = _notifications[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  color: notification.isRead ? Colors.white : lightPurple,
-                  child: ListTile(
-                    leading: Icon(
-                      _getNotificationIcon(notification.type),
-                      color: _getNotificationColor(notification.type),
-                    ),
-                    title: Text(
-                      notification.title,
-                      style: TextStyle(
-                        fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+            );
+          }
+
+          final notifications = snapshot.data ?? [];
+
+          return notifications.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.notifications_off,
+                        size: 100,
+                        color: Colors.grey.withOpacity(0.3),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'No Notifications',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'You\'re all caught up!',
+                        style: TextStyle(color: textSecondary),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                      child: Row(
+                        children: [
+                          if (notifications.any((n) => !n.isRead))
+                            TextButton.icon(
+                              onPressed: _markAllAsRead,
+                              icon: const Icon(Icons.mark_email_read),
+                              label: const Text('Mark all read'),
+                            ),
+                          const Spacer(),
+                          TextButton.icon(
+                            onPressed: _clearAll,
+                            icon: const Icon(Icons.delete_outline),
+                            label: const Text('Clear all'),
+                          ),
+                        ],
                       ),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(notification.message),
-                        const SizedBox(height: 4),
-                        Text(
-                          _formatTime(notification.time),
-                          style: const TextStyle(fontSize: 12, color: textSecondary),
-                        ),
-                      ],
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: notifications.length,
+                        itemBuilder: (context, index) {
+                          final notification = notifications[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            color: notification.isRead ? Colors.white : lightPurple,
+                            child: ListTile(
+                              leading: Icon(
+                                _getNotificationIcon(notification.type),
+                                color: _getNotificationColor(notification.type),
+                              ),
+                              title: Text(
+                                notification.title,
+                                style: TextStyle(
+                                  fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(notification.message),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _formatTime(notification.createdAt.toLocal()),
+                                    style: const TextStyle(fontSize: 12, color: textSecondary),
+                                  ),
+                                ],
+                              ),
+                              trailing: !notification.isRead
+                                  ? const Icon(
+                                      Icons.circle,
+                                      color: primaryPurple,
+                                      size: 8,
+                                    )
+                                  : null,
+                              onTap: () => _markAsRead(notification.id),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                    trailing: !notification.isRead
-                        ? Icon(
-                            Icons.circle,
-                            color: primaryPurple,
-                            size: 8,
-                          )
-                        : null,
-                    onTap: () => _markAsRead(notification.id),
-                  ),
+                  ],
                 );
-              },
-            ),
+        },
+      ),
     );
   }
-}
-
-class NotificationItem {
-  final int id;
-  final String title;
-  final String message;
-  final String type;
-  final DateTime time;
-  bool isRead;
-
-  NotificationItem({
-    required this.id,
-    required this.title,
-    required this.message,
-    required this.type,
-    required this.time,
-    required this.isRead,
-  });
 }

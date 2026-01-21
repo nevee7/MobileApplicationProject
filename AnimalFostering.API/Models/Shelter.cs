@@ -27,7 +27,9 @@ namespace AnimalFostering.API.Models
         public string? Website { get; set; }
         public string? OpeningHours { get; set; }
         public bool? IsOpenNow { get; set; }
-        
+
+        public bool IsActive { get; set; } = true;
+
         // Add this for distinguishing between local and Google Places data
         public string? Source { get; set; } = "Local"; // "Local" or "GooglePlaces"
         

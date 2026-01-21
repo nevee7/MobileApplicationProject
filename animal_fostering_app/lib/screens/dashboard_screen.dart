@@ -6,7 +6,7 @@ import '../theme.dart';
 import 'animal_list_screen.dart';
 import 'map_screen.dart';
 import 'my_applications_screen.dart';
-import 'chat_screen.dart';
+import 'user_chat_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -26,7 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const UserHomeScreen(),
     const MapScreen(),
     const MyApplicationsScreen(),
-    const ChatScreen(),
+    const UserChatScreen(),
   ];
 
   @override
@@ -184,8 +184,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _adminActionCard('Adoption Requests', Icons.assignment, '/applications'),
                 _adminActionCard('Manage Shelters', Icons.location_city, '/shelters'),
                 _adminActionCard('User Management', Icons.people, '/users'),
-                _adminActionCard('Upload Photos', Icons.photo_camera, '/camera'),
                 _adminActionCard('Analytics', Icons.analytics, '/analytics'),
+                _adminActionCard('Chat', Icons.chat_bubble_outline, '/admin-chat'),
               ],
             ),
           ),
@@ -266,10 +266,13 @@ Widget _adminActionCard(String title, IconData icon, String route) {
           Navigator.pushNamed(context, '/admin/applications');
         } else if (route == '/users') {
           Navigator.pushNamed(context, '/admin/users');
+        } else if (route == '/admin-chat') {
+          Navigator.pushNamed(context, '/admin-chat');
         } else {
           Navigator.pushNamed(context, route);
         }
       },
+
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -531,7 +534,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     );
                   }
                   
-                  final animals = snapshot.data ?? [];
+                  final animals = (snapshot.data ?? [])
+                      .where((a) => a.status.toLowerCase() != 'adopted')
+                      .toList();
                   
                   // Filter animals based on search query
                   List<Animal> filteredAnimals = animals;

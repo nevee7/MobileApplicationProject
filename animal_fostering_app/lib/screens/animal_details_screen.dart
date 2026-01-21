@@ -1,5 +1,4 @@
 // lib/screens/animal_details_screen.dart
-import 'package:animal_fostering_app/models/adoption_application.dart';
 import 'package:animal_fostering_app/screens/edit_animal_screen.dart';
 import 'package:animal_fostering_app/services/api_service.dart';
 import 'package:animal_fostering_app/services/auth_service.dart';
@@ -78,21 +77,11 @@ Future<void> _submitAdoptionApplication(BuildContext context) async {
           onPressed: () async {
             Navigator.pop(context);
             try {
-              final application = AdoptionApplication(
-                id: DateTime.now().millisecondsSinceEpoch,
-                userId: currentUser.id,
+              final message = messageController.text.trim();
+              final success = await ApiService.createAdoptionApplication(
                 animalId: animal.id,
-                status: 'Pending',
-                message: messageController.text.trim().isEmpty ? null : messageController.text.trim(),
-                adminNotes: null,
-                applicationDate: DateTime.now(),
-                reviewedDate: null,
-                reviewedByAdminId: null,
-                user: currentUser,
-                animal: animal,
+                message: message.isEmpty ? null : message,
               );
-
-              final success = await ApiService.createAdoptionApplication(application);
               
               if (success) {
                 ScaffoldMessenger.of(context).showSnackBar(

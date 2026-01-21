@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/adoption_application.dart';
 import '../services/api_service.dart';
-import '../services/auth_service.dart';
 import '../theme.dart';
 
 class AdminManageApplicationsScreen extends StatefulWidget {
@@ -51,6 +50,35 @@ class _AdminManageApplicationsScreenState extends State<AdminManageApplicationsS
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _confirmAndUpdate(AdoptionApplication application, String status) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${status == 'Approved' ? 'Approve' : 'Reject'} Application'),
+        content: Text(
+          'Are you sure you want to ${status.toLowerCase()} this application?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: status == 'Approved' ? Colors.green : Colors.red,
+            ),
+            child: Text(status == 'Approved' ? 'Approve' : 'Reject'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _updateApplicationStatus(application, status);
     }
   }
 
@@ -208,7 +236,7 @@ class _AdminManageApplicationsScreenState extends State<AdminManageApplicationsS
                   const Icon(Icons.assignment, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
                   Text(
-                    'No ${_filterStatus.toLowerCase() == 'all' ? '' : _filterStatus.toLowerCase() + ' '}applications',
+                    'No ${_filterStatus.toLowerCase() == 'all' ? '' : '${_filterStatus.toLowerCase()} '}applications',
                     style: const TextStyle(fontSize: 18, color: textSecondary),
                   ),
                 ],
@@ -222,22 +250,54 @@ class _AdminManageApplicationsScreenState extends State<AdminManageApplicationsS
               final application = filteredApplications[index];
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  title: Text(
-                    application.animal?.name ?? 'Animal ${application.animalId}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Applicant: ${application.user?.fullName ?? "User ${application.userId}"}'),
-                      Text('Status: ${application.status}'),
-                      Text('Applied: ${application.applicationDate.toLocal().toString().split(' ')[0]}'),
-                    ],
-                  ),
-                  trailing: _buildStatusChip(application.status),
-                  onTap: () => _showApplicationDetails(application),
-                  onLongPress: () => _showAdminNotesDialog(application),
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: Text(
+                        application.animal?.name ?? 'Animal ${application.animalId}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Applicant: ${application.user?.fullName ?? "User ${application.userId}"}'),
+                          Text('Status: ${application.status}'),
+                          Text('Applied: ${application.applicationDate.toLocal().toString().split(' ')[0]}'),
+                        ],
+                      ),
+                      trailing: _buildStatusChip(application.status),
+                      onTap: () => _showApplicationDetails(application),
+                      onLongPress: () => _showAdminNotesDialog(application),
+                    ),
+                    if (application.isPending)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _confirmAndUpdate(application, 'Rejected'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                ),
+                                child: const Text('Reject'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () => _confirmAndUpdate(application, 'Approved'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                ),
+                                child: const Text('Approve'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
               );
             },

@@ -237,7 +237,7 @@ class _AdminManageUsersScreenState extends State<AdminManageUsersScreen> {
                                   color: primaryPurple.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Text(
+                                child: const Text(
                                   'ADMIN',
                                   style: TextStyle(
                                     color: primaryPurple,

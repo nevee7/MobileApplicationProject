@@ -201,6 +201,28 @@ namespace AnimalFostering.API.Controllers
 
             // Return the created application with user and animal info
             var user = await _context.Users.FindAsync(userId);
+            var adminIds = await _context.Users
+                .Where(u => u.Role == "Admin" && u.IsActive)
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            foreach (var adminId in adminIds)
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    UserId = adminId,
+                    Title = "New Adoption Application",
+                    Message = $"{user?.FirstName} {user?.LastName} applied to adopt {animal.Name}.",
+                    Type = "Info",
+                    RelatedEntityType = "Application",
+                    RelatedEntityId = application.Id,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
             var createdApplication = new
             {
                 application.Id,
@@ -243,7 +265,10 @@ namespace AnimalFostering.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateApplicationStatus(int id, [FromBody] UpdateApplicationStatusRequest request)
         {
-            var application = await _context.AdoptionApplications.FindAsync(id);
+            var application = await _context.AdoptionApplications
+                .Include(a => a.Animal)
+                .Include(a => a.User)
+                .FirstOrDefaultAsync(a => a.Id == id);
             if (application == null) 
                 return NotFound(new { message = "Application not found" });
 
@@ -253,6 +278,26 @@ namespace AnimalFostering.API.Controllers
             application.AdminNotes = request.AdminNotes;
             application.ReviewedDate = DateTime.UtcNow;
             application.ReviewedByAdminId = adminId;
+
+            if (application.Animal != null &&
+                string.Equals(request.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+            {
+                application.Animal.Status = "adopted";
+            }
+
+            await _context.SaveChangesAsync();
+
+            _context.Notifications.Add(new Notification
+            {
+                UserId = application.UserId,
+                Title = $"Application {application.Status}",
+                Message = $"Your application for {application.Animal?.Name ?? "the animal"} was {application.Status.ToLowerInvariant()}.",
+                Type = application.Status == "Approved" ? "Success" : "Warning",
+                RelatedEntityType = "Application",
+                RelatedEntityId = application.Id,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
 
             await _context.SaveChangesAsync();
             return NoContent();

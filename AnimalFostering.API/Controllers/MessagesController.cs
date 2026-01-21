@@ -46,6 +46,46 @@ namespace AnimalFostering.API.Controllers
             _context.ChatMessages.Add(message);
             await _context.SaveChangesAsync();
 
+            var sender = await _context.Users.FindAsync(senderId);
+            if (request.ReceiverId.HasValue)
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    UserId = request.ReceiverId.Value,
+                    Title = "New Message",
+                    Message = $"New message from {sender?.FirstName ?? "User"} {sender?.LastName ?? string.Empty}".Trim(),
+                    Type = "Info",
+                    RelatedEntityType = "Message",
+                    RelatedEntityId = message.Id,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                var adminIds = await _context.Users
+                    .Where(u => u.Role == "Admin" && u.IsActive)
+                    .Select(u => u.Id)
+                    .ToListAsync();
+
+                foreach (var adminId in adminIds)
+                {
+                    _context.Notifications.Add(new Notification
+                    {
+                        UserId = adminId,
+                        Title = "New Message",
+                        Message = $"New message from {sender?.FirstName ?? "User"} {sender?.LastName ?? string.Empty}".Trim(),
+                        Type = "Info",
+                        RelatedEntityType = "Message",
+                        RelatedEntityId = message.Id,
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
             return Ok(new 
             { 
                 message = "Message sent successfully",

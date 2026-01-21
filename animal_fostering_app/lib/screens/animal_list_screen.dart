@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/animal.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../widgets/animal_card.dart';
 import '../theme.dart';
 import 'animal_details_screen.dart';
@@ -23,7 +24,13 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
 
   final List<String> _speciesOptions = ['All Species', 'Dog', 'Cat', 'Bird', 'Rabbit', 'Other'];
   final List<String> _statusOptions = ['All Status', 'Available', 'Fostered', 'Adopted', 'Pending'];
-  final List<String> _shelterOptions = ['All Shelters', 'Happy Paws', 'Animal Rescue', 'Safe Haven'];
+  final List<String> _shelterOptions = [
+    'All Shelters',
+    'Animal Protection Association Timisoara',
+    'Salvami Animal Rescue',
+    'Doctor Vet Clinic',
+    'Animed Veterinary Center'
+  ];
 
   @override
   void initState() {
@@ -74,11 +81,27 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
   }
 
   void _showAdoptionDialog(Animal animal) {
+    final messageController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Apply for Adoption'),
-        content: Text('Would you like to apply to adopt ${animal.name}?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Would you like to apply to adopt ${animal.name}?'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: messageController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Message (optional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -87,7 +110,8 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _submitAdoptionApplication(animal);
+              final message = messageController.text.trim();
+              _submitAdoptionApplication(animal, message.isEmpty ? null : message);
             },
             style: ElevatedButton.styleFrom(backgroundColor: primaryPurple),
             child: const Text('Apply'),
@@ -97,16 +121,48 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
     );
   }
 
-  void _submitAdoptionApplication(Animal animal) {
-    // In a real app, this would call your API
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Application submitted for ${animal.name}!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    
-    // Refresh the list to potentially update status
+  Future<void> _submitAdoptionApplication(Animal animal, String? message) async {
+    final currentUser = AuthService.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to apply for adoption'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final success = await ApiService.createAdoptionApplication(
+        animalId: animal.id,
+        message: message,
+      );
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Application submitted for ${animal.name}!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to submit application'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+
     _refresh();
   }
 
@@ -269,7 +325,10 @@ class _AnimalListScreenState extends State<AnimalListScreen> {
                   );
                 }
 
-                final animals = snapshot.data ?? [];
+                final allAnimals = snapshot.data ?? [];
+                final animals = AuthService.isAdmin
+                    ? allAnimals
+                    : allAnimals.where((a) => a.status.toLowerCase() != 'adopted').toList();
 
                 if (animals.isEmpty) {
                   return Center(

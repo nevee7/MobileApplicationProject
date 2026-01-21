@@ -12,6 +12,7 @@ class Shelter {
   final String? website; // Add this
   final String? openingHours; // Add this
   final String? source; // Add this - "Local" or "GooglePlaces"
+  final bool? isActive;
 
   Shelter({
     required this.id,
@@ -27,6 +28,7 @@ class Shelter {
     this.website,
     this.openingHours,
     this.source,
+    this.isActive,
   });
 
   factory Shelter.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,7 @@ class Shelter {
       website: (json['Website'] ?? json['website']) as String?,
       openingHours: (json['OpeningHours'] ?? json['openingHours']) as String?,
       source: (json['Source'] ?? json['source']) as String?,
+      isActive: (json['IsActive'] ?? json['isActive']) as bool?,
     );
   }
 
@@ -61,5 +64,6 @@ class Shelter {
     'Website': website,
     'OpeningHours': openingHours,
     'Source': source,
+    'IsActive': isActive,
   };
 }

@@ -199,7 +199,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: primaryPurple.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
+              child: const Text(
                 'ADMIN',
                 style: TextStyle(
                   color: primaryPurple,
@@ -231,7 +231,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   if (!message.isMe)
                     Text(
                       message.sender,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: primaryPurple,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -287,7 +287,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(width: 12),
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: cuteGradient,
               shape: BoxShape.circle,
             ),

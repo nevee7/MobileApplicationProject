@@ -208,7 +208,7 @@ class _EditAnimalScreenState extends State<EditAnimalScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _gender,
+                      initialValue: _gender,
                       items: ['Unknown', 'Male', 'Female']
                           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                           .toList(),
@@ -217,7 +217,7 @@ class _EditAnimalScreenState extends State<EditAnimalScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _size,
+                      initialValue: _size,
                       items: ['Small', 'Medium', 'Large']
                           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                           .toList(),
@@ -239,7 +239,7 @@ class _EditAnimalScreenState extends State<EditAnimalScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _status,
+                      initialValue: _status,
                       items: ['available', 'fostered', 'adopted', 'pending']
                           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                           .toList(),

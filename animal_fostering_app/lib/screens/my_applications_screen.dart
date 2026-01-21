@@ -279,7 +279,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                             color: primaryPurple.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.pets,
                             color: primaryPurple,
                             size: 30,

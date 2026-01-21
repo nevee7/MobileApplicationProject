@@ -1,7 +1,8 @@
+import 'package:animal_fostering_app/screens/admin_chat_list_screen.dart';
 import 'package:animal_fostering_app/screens/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/chat_screen.dart';
+import 'screens/user_chat_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/my_applications_screen.dart';
 import 'services/auth_service.dart';
@@ -19,6 +20,8 @@ import 'screens/animal_details_screen.dart';
 import 'models/animal.dart';
 import 'screens/admin_manage_applications_screen.dart';
 import 'screens/admin_manage_users_screen.dart';
+import 'screens/admin_analytics_screen.dart';
+import 'screens/admin_manage_shelters_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,7 +97,7 @@ class AnimalFosteringApp extends StatelessWidget {
         '/animals': (context) => const AnimalListScreen(),
         '/map': (context) => const MapScreen(),
         '/my-applications': (context) => const MyApplicationsScreen(),
-        '/chat': (context) => const ChatScreen(),
+        '/chat': (context) => const UserChatScreen(),
         '/add-animal': (context) => const AddAnimalScreen(),
         '/animal-details': (context) {
           final animal = ModalRoute.of(context)!.settings.arguments as Animal;
@@ -103,6 +106,10 @@ class AnimalFosteringApp extends StatelessWidget {
         '/admin/applications': (context) => const AdminManageApplicationsScreen(),
         '/admin/users': (context) => const AdminManageUsersScreen(),
         '/notifications': (context) => const NotificationsScreen(),
+        '/admin-chat': (context) => const AdminChatListScreen(),
+        '/analytics': (context) => const AdminAnalyticsScreen(),
+        '/shelters': (context) => const AdminManageSheltersScreen(),
+
       },
     );
   }

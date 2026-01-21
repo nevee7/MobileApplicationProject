@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/shelter.dart';
+import '../services/api_service.dart';
 import '../theme.dart';
 
 class MapScreen extends StatefulWidget {
@@ -38,10 +39,13 @@ class _MapScreenState extends State<MapScreen> {
       setState(() {
         _statusMessage = 'Searching for shelters in Timisoara...';
       });
-      
-      // Use direct fallback shelters for testing
-      _useFallbackShelters();
-      
+
+      final shelters = await ApiService.getShelters();
+      if (shelters.isEmpty) {
+        _useFallbackShelters();
+      } else {
+        _updateShelters(shelters);
+      }
     } catch (e) {
       print("Error loading shelters: $e");
       _useFallbackShelters();
@@ -221,6 +225,12 @@ class _MapScreenState extends State<MapScreen> {
     }
     
     print("Total markers added: $addedMarkers");
+
+    if (addedMarkers == 0 && !_usingGooglePlaces) {
+      print("No valid markers from API, using fallback shelters");
+      _useFallbackShelters();
+      return;
+    }
     
     // Add current location marker
     LatLng locationToShow = _currentLocation ?? _timisoaraCenter;
